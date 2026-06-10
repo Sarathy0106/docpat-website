@@ -44,8 +44,8 @@ const VIDEO_NODES = [
 // ── Grid tile positions (3×3 block face) ─────────────────────────
 const TILE_EXPLODE = [
     { x: -60, y: -60 }, { x: 0, y: -70 }, { x: 60, y: -60 },
-    { x: -70, y:   0 }, { x: 0, y:   0 }, { x: 70, y:   0 },
-    { x: -60, y:  60 }, { x: 0, y:  70 }, { x: 60, y:  60 },
+    { x: -70, y: 0 }, { x: 0, y: 0 }, { x: 70, y: 0 },
+    { x: -60, y: 60 }, { x: 0, y: 70 }, { x: 60, y: 60 },
 ]
 
 // ── Node final positions (2×2 grid, relative to center) ──────────
@@ -54,9 +54,9 @@ function nodeTargets(w: number, h: number) {
     const ny = Math.min(120, h * 0.20)
     return [
         { x: -nx, y: -ny },
-        { x:  nx, y: -ny },
-        { x: -nx, y:  ny },
-        { x:  nx, y:  ny },
+        { x: nx, y: -ny },
+        { x: -nx, y: ny },
+        { x: nx, y: ny },
     ]
 }
 
@@ -69,8 +69,8 @@ export default function DocPatHero({
     videoHeight?: number
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    const wrapRef   = useRef<HTMLDivElement>(null)
-    const threeRef  = useRef<any>(null)
+    const wrapRef = useRef<HTMLDivElement>(null)
+    const threeRef = useRef<any>(null)
     const [dims, setDims] = useState({ w: 1200, h: 800 })
 
     // ── Framer scroll tracking ──────────────────────────────────
@@ -96,7 +96,7 @@ export default function DocPatHero({
     const labelOpacity = useTransform(
         smoothProgress,
         [0, 0.08, 0.75, 0.90],
-        [0,  1,    1,    0   ]
+        [0, 1, 1, 0]
     )
 
     // Each video node
@@ -104,14 +104,14 @@ export default function DocPatHero({
         useTransform(
             smoothProgress,
             [0.15 + i * 0.05, 0.45 + i * 0.03, 0.82, 1.0],
-            [0,                1,                1,    0  ]
+            [0, 1, 1, 0]
         )
     )
     const nodeScales = VIDEO_NODES.map((_, i) =>
         useTransform(
             smoothProgress,
             [0.15 + i * 0.05, 0.50 + i * 0.03],
-            [0.5,              1               ]
+            [0.5, 1]
         )
     )
 
@@ -149,7 +149,7 @@ export default function DocPatHero({
 
             let mx = 0, my = 0, raf: number
             const onMouse = (e: MouseEvent) => {
-                mx = (e.clientX / innerWidth  - 0.5) * 0.3
+                mx = (e.clientX / innerWidth - 0.5) * 0.3
                 my = (e.clientY / innerHeight - 0.5) * -0.3
             }
             window.addEventListener("mousemove", onMouse)
@@ -201,9 +201,9 @@ export default function DocPatHero({
     const [labelIdx, setLabelIdx] = useState(0)
     const LABELS = [
         { h: "One Block. Four Superpowers.", p: "Scroll to see the architecture unfold" },
-        { h: "Decentralized Storage",        p: "Files pinned to IPFS — no central server" },
-        { h: "Blockchain Verified",          p: "SHA-256 hash stored immutably on Polygon" },
-        { h: "Secure QR Sharing",            p: "PIN-protected, time-limited, audited" },
+        { h: "Decentralized Storage", p: "Files pinned to IPFS — no central server" },
+        { h: "Blockchain Verified", p: "SHA-256 hash stored immutably on Polygon" },
+        { h: "Secure QR Sharing", p: "PIN-protected, time-limited, audited" },
     ]
     useEffect(() => {
         return smoothProgress.on("change", (v) => {
@@ -233,7 +233,6 @@ export default function DocPatHero({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: "#03060f",
                 }}
             >
                 {/* Grid background */}
