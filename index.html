@@ -4,7 +4,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DocPat — Decentralized Health Records</title>
+  <title>DocPat</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <meta name="description"
+    content="DocPat is your private health locker. Every report, prescription and scan is locked on your phone before it goes anywhere, so only you can open it. Share with your doctor in seconds — and take access back anytime." />
+  <meta property="og:title" content="DocPat — Your Health Records. Safe. Private. Yours." />
+  <meta property="og:description"
+    content="Lock your medical records on your phone. Share them with a simple QR code. Take back access anytime." />
+  <meta property="og:type" content="website" />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet" />
@@ -47,12 +54,15 @@
       pointer-events: none;
     }
 
-    /* ── GRID OVERLAY ── */
+    /* ── GRID OVERLAY ──
+       extends past the viewport so the cursor-parallax drift never
+       exposes a bare edge; transform is driven from the render loop */
     .grid-bg {
       position: fixed;
-      inset: 0;
+      inset: -64px;
       z-index: 1;
       pointer-events: none;
+      will-change: transform;
       background-image:
         linear-gradient(rgba(14, 165, 233, 0.055) 1px, transparent 1px),
         linear-gradient(90deg, rgba(14, 165, 233, 0.055) 1px, transparent 1px);
@@ -69,6 +79,63 @@
       width: 0%;
       background: linear-gradient(90deg, var(--sky), var(--sky3), var(--sky2));
       box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+    }
+
+    /* ── CUSTOM CURSOR ──
+       dot snaps to the pointer, ring glides behind it; the ring grows
+       over anything clickable and squeezes on press. Desktop mice only. */
+    #cursor-dot,
+    #cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 600;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+
+    #cursor-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--sky3);
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.65);
+    }
+
+    #cursor-ring {
+      width: 38px;
+      height: 38px;
+      border: 1.5px solid rgba(2, 132, 199, 0.55);
+      background: rgba(14, 165, 233, 0.05);
+      transition: opacity .3s, border-color .25s, background-color .25s;
+    }
+
+    #cursor-ring.cursor-hover {
+      border-color: rgba(2, 132, 199, 0.9);
+      background: rgba(14, 165, 233, 0.12);
+    }
+
+    body.cursor-on,
+    body.cursor-on * {
+      cursor: none !important;
+    }
+
+    @media (hover: none),
+    (pointer: coarse) {
+
+      #cursor-dot,
+      #cursor-ring {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      #cursor-dot,
+      #cursor-ring {
+        display: none;
+      }
     }
 
     /* ── NAV ── */
@@ -91,32 +158,19 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: -0.5px;
       color: var(--text);
     }
 
-    .logo-icon {
+    .logo-img {
       width: 32px;
       height: 32px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--sky3), var(--sky2));
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
     }
 
-    .logo-icon svg {
-      width: 18px;
-      height: 18px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2;
-    }
-
-    .logo span {
-      color: var(--sky);
+    .logo-text {
+      height: 24px;
+      width: auto;
+      display: block;
     }
 
     .nav-links {
@@ -174,6 +228,12 @@
       justify-content: flex-end;
       opacity: 0.22;
       transition: opacity .4s;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    .ph-item:hover {
+      opacity: 0.75;
     }
 
     .ph-item.active {
@@ -228,7 +288,7 @@
     }
 
     .hero-left {
-      padding-top: 20px;
+      margin-top: -45px;
     }
 
     /* right column is transparent — the 3D canvas cube shows through */
@@ -327,7 +387,6 @@
       font-weight: 600;
       font-size: 14px;
       cursor: pointer;
-      backdrop-filter: blur(8px);
       transition: border-color .2s, color .2s, background .2s;
       display: flex;
       align-items: center;
@@ -338,6 +397,66 @@
       border-color: var(--sky);
       color: var(--sky);
       background: rgba(14, 165, 233, 0.05);
+    }
+
+    .store-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 13px;
+      background: #0b1220;
+      color: #fff;
+      text-decoration: none;
+      padding: 11px 24px 11px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      transition: transform .2s, background-color .2s, box-shadow .2s;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.22);
+      cursor: pointer;
+    }
+
+    .store-btn:hover {
+      transform: translateY(-2px);
+      background: #16233c;
+      box-shadow: 0 14px 40px rgba(15, 23, 42, 0.32);
+    }
+
+    .store-icon {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .store-text {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      line-height: 1.25;
+    }
+
+    .store-sub {
+      font-size: 9px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 1.1px;
+    }
+
+    .store-main {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.2px;
+    }
+
+    /* on the dark CTA band, give the badge a brighter edge so it stands out */
+    .store-btn-cta {
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35);
+    }
+
+    .store-btn-cta:hover {
+      border-color: rgba(255, 255, 255, 0.55);
     }
 
     /* Trust row */
@@ -380,6 +499,32 @@
       font-size: 13px;
       letter-spacing: 1px;
       margin-bottom: 1px;
+    }
+
+    .hero-proof {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .proof-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-left: 12px;
+      border-left: 2px solid rgba(14, 165, 233, 0.35);
+    }
+
+    .proof-item strong {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--sky2);
+      letter-spacing: 0.2px;
+    }
+
+    .proof-item span {
+      font-size: 11px;
+      color: var(--muted);
     }
 
     /* ── SECTION HEADERS ── */
@@ -444,6 +589,7 @@
     #features {
       background: transparent;
       padding-top: 180px;
+      padding-bottom: 40px;
     }
 
     .feat-inner {
@@ -463,9 +609,8 @@
     }
 
     .feat-card {
-      background: rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.94);
       border: 1px solid rgba(14, 165, 233, 0.12);
-      backdrop-filter: blur(16px);
       border-radius: 18px;
       padding: 28px 24px;
       opacity: 0;
@@ -575,9 +720,8 @@
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       border: 1.5px solid rgba(14, 165, 233, 0.25);
-      backdrop-filter: blur(8px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -641,9 +785,8 @@
     }
 
     .cblock {
-      background: rgba(255, 255, 255, 0.90);
+      background: rgba(255, 255, 255, 0.95);
       border: 1px solid rgba(14, 165, 233, 0.18);
-      backdrop-filter: blur(12px);
       border-radius: 12px;
       padding: 18px 22px;
       font-family: 'JetBrains Mono', monospace;
@@ -760,9 +903,8 @@
     }
 
     .sec-card {
-      background: rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.94);
       border: 1px solid rgba(14, 165, 233, 0.12);
-      backdrop-filter: blur(12px);
       border-radius: 14px;
       padding: 22px 20px;
       opacity: 0;
@@ -817,6 +959,33 @@
       line-height: 1.6;
     }
 
+    /* ── AUDIENCE ── */
+    #audience {
+      background: rgba(240, 249, 255, 0.38);
+      border-top: 1px solid var(--border);
+    }
+
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 56px;
+    }
+
+    .aud-card {
+      text-align: center;
+      padding: 36px 28px;
+    }
+
+    .aud-card h3 {
+      font-size: 17px;
+      margin-bottom: 10px;
+    }
+
+    .aud-card p {
+      font-size: 13px;
+    }
+
     /* ── TECH ── */
     #tech {
       background: rgba(255, 255, 255, 0.30);
@@ -832,9 +1001,8 @@
     }
 
     .pill {
-      background: rgba(255, 255, 255, 0.90);
+      background: rgba(255, 255, 255, 0.95);
       border: 1px solid rgba(14, 165, 233, 0.18);
-      backdrop-filter: blur(8px);
       border-radius: 100px;
       padding: 7px 18px;
       font-size: 12.5px;
@@ -949,13 +1117,19 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 17px;
-      font-weight: 900;
       color: var(--text);
     }
 
-    .logo-footer span {
-      color: var(--sky);
+    .logo-img-footer {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    .logo-text-footer {
+      height: 20px;
+      width: auto;
+      display: block;
     }
 
     footer p {
@@ -1051,9 +1225,17 @@
       }
     }
 
+    @media(max-width: 1024px) and (min-width: 769px) {
+
+      /* tablets — keep overlays readable beside the 3D scene */
+      .anim-step {
+        width: min(400px, 44vw);
+      }
+    }
+
     @media(max-width: 768px) {
       nav {
-        padding: 16px 20px;
+        padding: 14px 20px;
       }
 
       .nav-links {
@@ -1078,10 +1260,107 @@
 
       footer {
         padding: 28px 20px;
+        justify-content: center;
+        text-align: center;
       }
 
       #phase-indicator {
         display: none;
+      }
+
+      /* scroll-story overlays: full-width banners on phones */
+      .anim-step {
+        width: 86vw !important;
+        left: 7vw !important;
+        right: auto !important;
+        text-align: left !important;
+      }
+
+      /* phone/server/QR story on phones: text sits at the top,
+         the 3D objects play out top-to-bottom underneath it */
+      #hiw-text-container .anim-step {
+        top: 11%;
+        transform: translateY(14px);
+      }
+
+      #hiw-text-container .anim-step.active {
+        transform: translateY(0);
+      }
+
+      .anim-step h2 {
+        font-size: 1.55rem;
+      }
+
+      .anim-step p {
+        font-size: 0.95rem;
+      }
+
+      .hero-btns {
+        flex-wrap: wrap;
+      }
+
+      .hero-proof {
+        gap: 16px;
+      }
+
+      .audience-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media(max-width: 480px) {
+      section {
+        padding: 64px 16px;
+      }
+
+      #hero {
+        padding: 92px 22px 48px;
+      }
+
+      .hero-h1 {
+        letter-spacing: -1.5px;
+      }
+
+      .hero-sub {
+        font-size: 14.5px;
+      }
+
+      nav {
+        padding: 12px 14px;
+      }
+
+      .nav-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+      }
+
+      .btn-p,
+      .btn-s {
+        padding: 12px 22px;
+        font-size: 13px;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .anim-step h2 {
+        font-size: 1.3rem;
+      }
+
+      .anim-step p {
+        font-size: 0.88rem;
+      }
+
+      #cta p {
+        font-size: 14px;
+      }
+
+      .pills {
+        gap: 7px;
+      }
+
+      .pill {
+        font-size: 11.5px;
+        padding: 6px 14px;
       }
     }
   </style>
@@ -1092,18 +1371,22 @@
   <div class="grid-bg"></div>
   <div id="scroll-line"></div>
 
+  <!-- Custom cursor: snappy dot + gliding ring -->
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
   <!-- Phase indicator -->
   <div id="phase-indicator">
-    <div class="ph-item active" id="ph0"><span class="ph-label">Assembled</span>
+    <div class="ph-item active" id="ph0"><span class="ph-label">Your Record</span>
       <div class="ph-dot"></div>
     </div>
-    <div class="ph-item" id="ph1"><span class="ph-label">Chunking</span>
+    <div class="ph-item" id="ph1"><span class="ph-label">How It Works</span>
       <div class="ph-dot"></div>
     </div>
-    <div class="ph-item" id="ph2"><span class="ph-label">Distributing</span>
+    <div class="ph-item" id="ph2"><span class="ph-label">Trust & Safety</span>
       <div class="ph-dot"></div>
     </div>
-    <div class="ph-item" id="ph3"><span class="ph-label">Verified</span>
+    <div class="ph-item" id="ph3"><span class="ph-label">Get App</span>
       <div class="ph-dot"></div>
     </div>
   </div>
@@ -1111,66 +1394,67 @@
   <!-- NAV -->
   <nav>
     <div class="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24">
-          <path d="M12 2L3 7l9 5 9-5-9-5z" />
-          <path d="M3 12l9 5 9-5" />
-          <path d="M3 17l9 5 9-5" />
-        </svg>
-      </div>
-      Doc<span>Pat</span>
+      <img src="assets/logo.svg" alt="DocPat Logo" class="logo-img" />
+      <img src="assets/font.png" alt="DocPat" class="logo-text" />
     </div>
     <div class="nav-links">
       <a href="#features">Features</a>
       <a href="#hiw">How It Works</a>
-      <a href="#blockchain">Blockchain</a>
-      <a href="#security">Security</a>
+      <a href="#blockchain">Trust</a>
+      <a href="#security">Safety</a>
     </div>
-    <button class="nav-btn">Get Early Access →</button>
+    <button class="nav-btn" onclick="document.getElementById('cta').scrollIntoView({ behavior: 'smooth' })">Get App
+    </button>
   </nav>
 
   <div id="anim-wrap">
     <!-- HERO: left = text, right = transparent so 3D cube shows through -->
     <section id="hero">
       <div class="hero-left">
-        <div class="hero-badge">
-          <div class="badge-dot"></div>Blockchain · IPFS · Decentralized
-        </div>
+
         <h1 class="hero-h1">
           Your Health Records.<br />
-          <span class="grad">Decentralized.<br />Verified.</span>
+          <span class="grad">Safe. Private.<br />Yours.</span>
         </h1>
         <p class="hero-sub">
-          Cryptographic ownership of your medical data.<br />
-          Stored on IPFS, verified on-chain,<br />
-          and securely shared through PIN-protected QR access.
+          DocPat is your family's private health locker. Every report,
+          prescription and scan is locked on your phone before it goes
+          anywhere — so only you can ever open it. Share with your doctor in
+          seconds, and take access back whenever you want.
         </p>
         <div class="hero-btns">
-          <button class="btn-p">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="5" y="2" width="14" height="20" rx="2" />
-              <line x1="12" y1="18" x2="12.01" y2="18" />
+
+          <a href="#" class="store-btn">
+            <svg class="store-icon" viewBox="0 0 512 512" aria-hidden="true">
+              <path fill="#00C3FF"
+                d="M47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0z" />
+              <path fill="#00DE7A" d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1z" />
+              <path fill="#FFCE00"
+                d="M472.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8z" />
+              <path fill="#FF3A44" d="M104.6 499l280.8-161.2-60.1-60.1L104.6 499z" />
             </svg>
-            Download App
-          </button>
-          <button class="btn-s">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path
-                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
+            <div class="store-text">
+              <span class="store-sub">Get it on</span>
+              <span class="store-main">Google Play</span>
+            </div>
+          </a>
+          <a href="#" class="store-btn">
+            <svg class="store-icon" viewBox="0 0 384 512" aria-hidden="true">
+              <path fill="#ffffff"
+                d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
             </svg>
-            View on GitHub
-          </button>
+            <div class="store-text">
+              <span class="store-sub">Download on the</span>
+              <span class="store-main">App Store</span>
+            </div>
+          </a>
         </div>
         <div class="trust-row">
-          <div class="trust-avatars">
-            <div class="trust-avatar" style="background:linear-gradient(135deg,#0ea5e9,#075985)">A</div>
-            <div class="trust-avatar" style="background:linear-gradient(135deg,#0369a1,#0c4a6e)">R</div>
-            <div class="trust-avatar" style="background:linear-gradient(135deg,#38bdf8,#0284c7)">K</div>
-            <div class="trust-avatar" style="background:linear-gradient(135deg,#7dd3fc,#0369a1)">S</div>
-          </div>
-          <div class="trust-info">
-            <div class="stars">★★★★★</div>
-            <div>Trusted by 10,000+ users</div>
+          <div class="hero-proof">
+            <div class="proof-item"><strong>Locked on Your Phone</strong><span>before anything is uploaded</span></div>
+            <div class="proof-item"><strong>Only You Can Open It</strong><span>not even we can see your records</span>
+            </div>
+            <div class="proof-item"><strong>Tamper-Proof</strong><span>any change is caught instantly</span></div>
           </div>
         </div>
       </div>
@@ -1185,27 +1469,118 @@
   <!-- 3D Animation Text Overlays -->
   <div id="anim-text-container" style="position: fixed; inset: 0; pointer-events: none; z-index: 15;">
     <div class="anim-step" id="step-2" style="left: 12%;">
-      <div class="sec-tag">Phase 1: Chunking</div>
-      <h2>Divided into secure chunks.</h2>
-      <p>To prevent single-point failures, the unified health record is shattered into 27 cryptographic pieces.</p>
+      <div class="sec-tag">Step 1: Locked</div>
+      <h2>Locked, then split into pieces.</h2>
+      <p>Your record is locked on your phone, then broken into 27 scrambled pieces — so no single computer anywhere
+        ever holds your readable file.</p>
     </div>
     <div class="anim-step" id="step-3" style="right: 12%; text-align: right;">
-      <div class="sec-tag">Phase 2: Distributing</div>
-      <h2>Distributed across the network.</h2>
-      <p>Each chunk is dispersed globally across decentralized IPFS nodes for maximum security and redundancy.</p>
+      <div class="sec-tag">Step 2: Spread</div>
+      <h2>Spread across the world.</h2>
+      <p>The locked pieces are stored across a global network of computers — always there when you need them,
+        unreadable to everyone who isn't you.</p>
     </div>
     <div class="anim-step" id="step-4" style="left: 12%;">
-      <div class="sec-tag">Phase 3: Securing</div>
-      <h2>Verified & Immutable.</h2>
-      <p>The network continuously verifies chunk integrity on-chain, ensuring zero tampering.</p>
+      <div class="sec-tag">Step 3: Sealed</div>
+      <h2>Sealed & tamper-proof.</h2>
+      <p>Every record gets its own unbreakable digital seal. If anyone changes even a single dot on your report,
+        DocPat catches it instantly.</p>
     </div>
   </div>
 
 
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="feat-inner">
+      <p class="sec-tag">Features</p>
+      <h2 class="sec-h">Everything your family's<br />health records deserve.</h2>
+      <p class="sec-sub" style="margin-bottom:0">DocPat is built around one simple promise: your records are locked
+        before they ever leave your phone — and only you decide who sees them.</p>
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg></div>
+          <h3>Add Records in Seconds</h3>
+          <p>Snap it with your camera, pick it from your gallery, or add a PDF. DocPat even reads the text for you,
+            so every report is easy to find later.</p>
+        </div>
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d="M7 11V7a5 5 0 0110 0v4" />
+            </svg></div>
+          <h3>Locked Before It Leaves</h3>
+          <p>Every record is sealed shut on your phone itself — before it is saved anywhere. Only you can ever
+            unlock it. Nobody else. Not even us.</p>
+        </div>
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <path d="M12 2L3 7l9 5 9-5-9-5z" />
+              <path d="M3 12l9 5 9-5" />
+              <path d="M3 17l9 5 9-5" />
+            </svg></div>
+          <h3>Tamper-Proof Records</h3>
+          <p>Each record carries a permanent digital seal. One tap tells you — and your doctor — that the report is
+            genuine and untouched.</p>
+        </div>
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <path d="M14 14h3v3h-3zM18 18h3v3h-3z" />
+            </svg></div>
+          <h3>Share with a Simple QR</h3>
+          <p>Show a QR code, tell your doctor the PIN, done. You choose how long it works — a day, a week, a month,
+            or just once.</p>
+        </div>
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg></div>
+          <h3>You Approve Every View</h3>
+          <p>Nobody sees your records until you say yes. Watch who's viewing, and take back access with one tap —
+            anytime, instantly.</p>
+        </div>
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+            </svg></div>
+          <h3>Lost Phone? Lose Nothing</h3>
+          <p>Set a secret recovery PIN once. Get a new phone, enter your PIN, and every record is right back where
+            it belongs.</p>
+        </div>
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 12l2 2 4-4" />
+            </svg></div>
+          <h3>Extra Locks Everywhere</h3>
+          <p>Your fingerprint or face unlocks the app, and records you share can't be screenshotted or saved by the
+            other person.</p>
+        </div>
+        <div class="feat-card">
+          <div class="f-icon"><svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg></div>
+          <h3>See Every Access</h3>
+          <p>A permanent history shows exactly who looked at what, and when. Nothing can be hidden or erased — not
+            even by us.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- HOW IT WORKS 3D ANIMATION WRAPPER -->
   <div id="hiw-anim-wrap">
     <div
-      style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; z-index: 10;">
+      style="height: 40vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; z-index: 10;">
       <p class="sec-tag">How It Works</p>
       <h2 class="sec-h">Simple steps.<br />Maximum security.</h2>
       <p class="sec-sub">From upload to verified share — your data stays yours every step of the way.</p>
@@ -1219,65 +1594,70 @@
   <div id="hiw-text-container" style="position: fixed; inset: 0; pointer-events: none; z-index: 15;">
     <div class="anim-step" id="hiw-step-1" style="right: 12%; text-align: right;">
       <div class="sec-tag">Step 01</div>
-      <h2>Select & Upload.</h2>
-      <p>Select your medical record from the file manager. The document is instantly encrypted client-side.</p>
+      <h2>Add your record.</h2>
+      <p>Snap it with your camera, pick it from your gallery, or choose a PDF. It's locked tight on your phone the
+        moment you add it — before it goes anywhere.</p>
     </div>
     <div class="anim-step" id="hiw-step-2" style="right: 12%; text-align: right;">
       <div class="sec-tag">Step 02</div>
-      <h2>Store & Hash.</h2>
-      <p>The file is stored in the decentralized database. A unique cryptographic hashkey is generated via smart
-        contract.</p>
+      <h2>Stored safely. Sealed forever.</h2>
+      <p>Your locked record is kept safe across a worldwide network, and stamped with a permanent digital seal that
+        proves it's genuine.</p>
     </div>
     <div class="anim-step" id="hiw-step-3" style="right: 12%; text-align: right;">
       <div class="sec-tag">Step 03</div>
-      <h2>QR Generation.</h2>
-      <p>The hash is converted into a secure, PIN-protected QR code for easy physical and digital sharing.</p>
+      <h2>Make a QR code.</h2>
+      <p>Create a QR code with its own PIN — valid for a day, a week, a month, or just one viewing. You decide how
+        long it lives.</p>
     </div>
     <div class="anim-step" id="hiw-step-4" style="left: 12%;">
       <div class="sec-tag">Step 04</div>
-      <h2>Instant Access.</h2>
-      <p>Authorized scanning of the QR code decrypts the hash and retrieves the pristine document instantly.</p>
+      <h2>Your doctor sees it. You stay in control.</h2>
+      <p>They scan, enter the PIN, and wait for your approval. They can look — but never copy, screenshot, or keep
+        your records. Take back access anytime.</p>
     </div>
   </div>
 
   <!-- BLOCKCHAIN -->
   <section id="blockchain">
     <div style="max-width:1100px;margin:0 auto;">
-      <p class="sec-tag">On-Chain Trust</p>
-      <h2 class="sec-h">Immutable. Verifiable.<br />Forever on the Blockchain.</h2>
+      <p class="sec-tag">Proof You Can Trust</p>
+      <h2 class="sec-h">Records that can't be faked.<br />Or quietly changed.</h2>
       <div class="bc-grid">
         <div class="chain-blocks">
           <div class="cblock">
-            <div class="cblock-hdr">Block #4821931 · Polygon</div>
-            <div>Prescription_2024-03.pdf</div>
-            <div class="cblock-hash">0x7f3a9b2c1d8e4f5a6b7c8d9e0f1a2b3c4d5e6f7a...</div>
-            <div style="margin-top:6px;color:var(--sky);font-size:9.5px;letter-spacing:.5px">✓ VERIFIED ON-CHAIN</div>
+            <div class="cblock-hdr">Digital Seal · Permanent</div>
+            <div>Prescription — sealed 12 Mar 2026</div>
+            <div class="cblock-hash">seal 0x7f3a9b2c1d8e4f5a6b7c8d9e0f1a2b3c4d5e6f7a...</div>
+            <div style="margin-top:6px;color:var(--sky);font-size:9.5px;letter-spacing:.5px">✓ GENUINE · UNTOUCHED
+            </div>
           </div>
           <div class="cchain"></div>
           <div class="cblock">
-            <div class="cblock-hdr">Block #4821905 · Polygon</div>
-            <div>Lab_Report_CBC.pdf</div>
-            <div class="cblock-hash">0x2e9f1a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9...</div>
-            <div style="margin-top:6px;color:var(--sky);font-size:9.5px;letter-spacing:.5px">✓ VERIFIED ON-CHAIN</div>
+            <div class="cblock-hdr">Digital Seal · Permanent</div>
+            <div>Lab Report — sealed 08 Mar 2026</div>
+            <div class="cblock-hash">seal 0x2e9f1a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9...</div>
+            <div style="margin-top:6px;color:var(--sky);font-size:9.5px;letter-spacing:.5px">✓ GENUINE · UNTOUCHED
+            </div>
           </div>
           <div class="cchain"></div>
           <div class="cblock">
-            <div class="cblock-hdr">Block #4821877 · Polygon</div>
-            <div>MRI_Scan_2024-01.jpg</div>
-            <div class="cblock-hash">0x5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4...</div>
-            <div style="margin-top:6px;color:var(--sky);font-size:9.5px;letter-spacing:.5px">✓ VERIFIED ON-CHAIN</div>
+            <div class="cblock-hdr">Digital Seal · Permanent</div>
+            <div>MRI Scan — sealed 27 Feb 2026</div>
+            <div class="cblock-hash">seal 0x5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4...</div>
+            <div style="margin-top:6px;color:var(--sky);font-size:9.5px;letter-spacing:.5px">✓ GENUINE · UNTOUCHED
+            </div>
           </div>
         </div>
         <div class="bc-feats">
           <div class="bc-feat">
             <div class="bc-ico"><svg viewBox="0 0 24 24">
-                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
               </svg></div>
             <div>
-              <h4>Multi-Network Support</h4>
-              <p>Deploy on Polygon, Sepolia, Mumbai testnet, or Ethereum mainnet with OpenZeppelin security patterns.
-              </p>
+              <h4>A Seal — Never Your Data</h4>
+              <p>The seal is just a meaningless code. No name, no diagnosis, no photo — your actual records never
+                leave their locked vault.</p>
             </div>
           </div>
           <div class="bc-feat">
@@ -1286,18 +1666,20 @@
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg></div>
             <div>
-              <h4>One-Tap Verification</h4>
-              <p>Calls <code style="color:var(--sky);font-size:11.5px">verifyDocument()</code> on-chain — tamper-proof
-                verdict instantly.</p>
+              <h4>One-Tap Genuine Check</h4>
+              <p>You — or your doctor — can confirm in seconds that a report is the original, untouched since the
+                day it was added. No arguments, no doubt.</p>
             </div>
           </div>
           <div class="bc-feat">
             <div class="bc-ico"><svg viewBox="0 0 24 24">
-                <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg></div>
             <div>
-              <h4>IPFS + Blockchain Duo</h4>
-              <p>File content on IPFS, metadata hash on-chain. Decentralized storage with immutable proof.</p>
+              <h4>Nothing Worth Stealing</h4>
+              <p>Even if someone broke into our servers, all they'd find is scrambled, locked data. The keys aren't
+                there — they're with you.</p>
             </div>
           </div>
           <div class="bc-feat">
@@ -1305,8 +1687,9 @@
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg></div>
             <div>
-              <h4>Emergency Controls</h4>
-              <p>Owner can pause/unpause the registry. Soft-delete preserves audit trail without permanent erasure.</p>
+              <h4>Emergency Brake Built In</h4>
+              <p>If anything ever looks suspicious, we can freeze new activity instantly — while your records stay
+                exactly where they are, safe and locked.</p>
             </div>
           </div>
         </div>
@@ -1319,10 +1702,10 @@
     <div class="sec-inner">
       <div class="sec-layout">
         <div>
-          <p class="sec-tag">Security by Design</p>
-          <h2 class="sec-h">Security is<br />in our DNA</h2>
-          <p class="sec-sub" style="margin-bottom:0">Multiple cryptographic layers protect your most sensitive data — at
-            rest, in transit, and on-chain. Zero trust model, no compromises.</p>
+          <p class="sec-tag">Safety First</p>
+          <h2 class="sec-h">Private by design.<br />Protected by default.</h2>
+          <p class="sec-sub" style="margin-bottom:0">Most apps promise not to look at your data. DocPat goes further —
+            we built it so nobody <em>can</em> look. Not hackers. Not staff. Not even us.</p>
         </div>
         <div class="sec-grid">
           <div class="sec-card">
@@ -1331,18 +1714,44 @@
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg></div>
             <div>
-              <h4>End-to-End Encryption</h4>
-              <p>Your data is encrypted on your device before it leaves your control.</p>
+              <h4>Locked on Your Device</h4>
+              <p>Every record is sealed shut on your phone before it is saved anywhere. The readable copy never
+                exists outside your hands.</p>
             </div>
           </div>
           <div class="sec-card">
             <div class="sc-ico"><svg viewBox="0 0 24 24">
-                <path d="M9 11l3 3L22 4" />
-                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                <rect x="2" y="7" width="20" height="14" rx="2" />
+                <path d="M8 7V5a4 4 0 018 0v2" />
+                <circle cx="12" cy="14" r="2.2" />
               </svg></div>
             <div>
-              <h4>Smart Contract Validation</h4>
-              <p>Smart contracts automate verification and enforce trust without intermediaries.</p>
+              <h4>Keys Stay With You</h4>
+              <p>The key that opens your records lives inside your phone's built-in safe. It never travels, and it's
+                never shared with anyone.</p>
+            </div>
+          </div>
+          <div class="sec-card">
+            <div class="sc-ico"><svg viewBox="0 0 24 24">
+                <path d="M1 4v6h6" />
+                <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+              </svg></div>
+            <div>
+              <h4>Easy, Safe Recovery</h4>
+              <p>One secret PIN brings everything back on a new phone. Without your PIN, the backup is just useless
+                scrambled noise.</p>
+            </div>
+          </div>
+          <div class="sec-card">
+            <div class="sc-ico"><svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15.3 15.3 0 010 20" />
+              </svg></div>
+            <div>
+              <h4>Invisible to Outsiders</h4>
+              <p>Every computer that stores your data sees only locked gibberish. There's nothing readable to hack,
+                leak, or sell.</p>
             </div>
           </div>
           <div class="sec-card">
@@ -1352,17 +1761,20 @@
                 <line x1="6" y1="20" x2="6" y2="14" />
               </svg></div>
             <div>
-              <h4>Immutable Audit Logs</h4>
-              <p>All actions are recorded on-chain and cannot be altered or tampered with.</p>
+              <h4>A History No One Can Erase</h4>
+              <p>Every action is written in permanent ink. Anyone who touches your records leaves a trace that you
+                can always see.</p>
             </div>
           </div>
           <div class="sec-card">
             <div class="sc-ico"><svg viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="M9 12l2 2 4-4" />
               </svg></div>
             <div>
-              <h4>Zero Trust Architecture</h4>
-              <p>We follow a zero trust model — no one can access your data without permission.</p>
+              <h4>Always On Guard</h4>
+              <p>Layer after layer of protection watches around the clock, spots unusual activity, and shuts trouble
+                down before it spreads.</p>
             </div>
           </div>
         </div>
@@ -1370,19 +1782,58 @@
     </div>
   </section>
 
+  <!-- WHO IT'S FOR -->
+  <section id="audience">
+    <div style="max-width:1100px;margin:0 auto;text-align:center;">
+      <p class="sec-tag">Built For Everyone in Care</p>
+      <h2 class="sec-h">One wallet.<br />Three sides of healthcare.</h2>
+      <div class="audience-grid">
+        <div class="feat-card aud-card">
+          <div class="f-icon" style="margin:0 auto 18px;"><svg viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg></div>
+          <h3>Patients</h3>
+          <p>Own every prescription, scan and report. Carry your entire medical history in your pocket, share it on
+            your terms, and revoke access the moment you change your mind.</p>
+        </div>
+        <div class="feat-card aud-card">
+          <div class="f-icon" style="margin:0 auto 18px;"><svg viewBox="0 0 24 24">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg></div>
+          <h3>Doctors</h3>
+          <p>Scan a patient's QR, enter the PIN, and see genuine, verified records in seconds — no missing files, no
+            fakes, no doubt.</p>
+        </div>
+        <div class="feat-card aud-card">
+          <div class="f-icon" style="margin:0 auto 18px;"><svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="9" y1="9" x2="9" y2="15" />
+              <line x1="13" y1="7" x2="13" y2="15" />
+              <line x1="17" y1="11" x2="17" y2="15" />
+            </svg></div>
+          <h3>Clinics & Admins</h3>
+          <p>A live dashboard that shows activity, alerts and safety at a glance — full visibility, without ever
+            seeing a single patient record.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- TECH -->
+  <!-- WHY DOCPAT -->
   <section id="tech">
-    <p class="sec-tag">Technology</p>
-    <h2 class="sec-h">The Stack</h2>
+    <p class="sec-tag">Why DocPat</p>
+    <h2 class="sec-h">Carry your health story.<br />Everywhere. Forever.</h2>
     <div class="pills">
-      <span class="pill hi">Flutter 3.9</span><span class="pill hi">Solidity</span>
-      <span class="pill hi">IPFS · Pinata</span><span class="pill hi">Polygon</span>
-      <span class="pill">Firebase Auth</span><span class="pill">Cloud Firestore</span>
-      <span class="pill">Web3Dart</span><span class="pill">Google ML Kit OCR</span>
-      <span class="pill">Setu DigiLocker</span><span class="pill">Web3.Storage</span>
-      <span class="pill">SHA-256</span><span class="pill">OpenZeppelin</span>
-      <span class="pill">Provider</span><span class="pill">QR Flutter</span>
-      <span class="pill">Screen Protector</span><span class="pill">Ethereum Sepolia</span>
+      <span class="pill hi">No more lost reports</span><span class="pill hi">No more hospital queues for files</span>
+      <span class="pill hi">No more repeat tests</span><span class="pill hi">No more photocopies</span>
+      <span class="pill">Every prescription in your pocket</span>
+      <span class="pill">Every scan one tap away</span>
+      <span class="pill">Share in seconds</span>
+      <span class="pill">Take back access anytime</span>
+      <span class="pill">Your whole family's records, organised</span>
+      <span class="pill">Free during beta</span>
     </div>
   </section>
 
@@ -1390,35 +1841,45 @@
   <section id="cta">
     <p class="sec-tag">Get Started</p>
     <h2 class="sec-h">Take control of<br />your health data</h2>
-    <p>Join thousands of people who trust DocPat for secure, decentralized healthcare.</p>
+    <p>Your reports. Your rules. Get DocPat and keep your family's health story safe for life — free while in beta.
+    </p>
     <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1;">
-      <button class="btn-cta-p">Get Early Access →</button>
-      <button class="btn-cta-s">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path
-            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
+      <a href="#" class="store-btn store-btn-cta">
+        <svg class="store-icon" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#00C3FF" d="M47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0z" />
+          <path fill="#00DE7A" d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1z" />
+          <path fill="#FFCE00" d="M472.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8z" />
+          <path fill="#FF3A44" d="M104.6 499l280.8-161.2-60.1-60.1L104.6 499z" />
         </svg>
-        View on GitHub
-      </button>
+        <div class="store-text">
+          <span class="store-sub">Get it on</span>
+          <span class="store-main">Google Play</span>
+        </div>
+      </a>
+      <a href="#" class="store-btn store-btn-cta">
+        <svg class="store-icon" viewBox="0 0 384 512" aria-hidden="true">
+          <path fill="#ffffff"
+            d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+        </svg>
+        <div class="store-text">
+          <span class="store-sub">Download on the</span>
+          <span class="store-main">App Store</span>
+        </div>
+      </a>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer>
     <div class="logo-footer">
-      <div class="logo-icon" style="width:28px;height:28px;border-radius:7px;">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2">
-          <path d="M12 2L3 7l9 5 9-5-9-5z" />
-          <path d="M3 12l9 5 9-5" />
-        </svg>
-      </div>
-      Doc<span>Pat</span>
+      <img src="assets/logo.svg" alt="DocPat Logo" class="logo-img-footer" />
+      <img src="assets/font.png" alt="DocPat" class="logo-text-footer" />
     </div>
-    <p>© 2024 DocPat. All rights reserved.</p>
+    <p>© 2026 DocPat. All rights reserved.</p>
     <div class="foot-links">
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms of Service</a>
-      <a href="#">Contact Us</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="contact.html">Contact Us</a>
     </div>
   </footer>
 
@@ -1438,10 +1899,6 @@
 
   <script type="module">
     import * as THREE from 'three';
-    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     gsap.registerPlugin(ScrollTrigger);
 
@@ -1449,8 +1906,8 @@
     const H = () => window.innerHeight;
 
     const canvas = document.getElementById('bg-canvas');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
     renderer.setSize(W(), H());
     renderer.setClearColor(0xf0f9ff, 1);
     renderer.toneMapping = THREE.LinearToneMapping;
@@ -1469,11 +1926,6 @@
     cam.add(bgMesh);
     scene.add(cam);
 
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, cam));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(W(), H()), 0.25, 0.4, 1.01);
-    composer.addPass(bloom);
-
     scene.add(new THREE.AmbientLight(0xbfdbfe, 3.5));
     const keyL = new THREE.DirectionalLight(0xffffff, 2.8); keyL.position.set(6, 8, 12); scene.add(keyL);
     const fillL = new THREE.DirectionalLight(0xe0f2fe, 1.4); fillL.position.set(-8, -4, 6); scene.add(fillL);
@@ -1490,8 +1942,12 @@
     const GRID = 3, GAP = 1.05, CS = 0.86;
     const chunkGeo = new THREE.BoxGeometry(CS, CS, CS, 1, 1, 1);
     const edgeGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(CS, CS, CS));
+    /* tiltGroup wraps the cube scene so the whole background can lean
+       toward the cursor without disturbing each child's own animation */
+    const tiltGroup = new THREE.Group();
+    scene.add(tiltGroup);
     const modelGroup = new THREE.Group();
-    scene.add(modelGroup);
+    tiltGroup.add(modelGroup);
 
     const chunks = [];
     let ci = 0;
@@ -1571,7 +2027,7 @@
     }
 
     const meshGroup = new THREE.Group();
-    scene.add(meshGroup);
+    tiltGroup.add(meshGroup);
     meshGroup.visible = false;
     for (let i = 0; i < NODE_POS.length; i++) for (let j = i + 1; j < NODE_POS.length; j++) {
       const p1 = new THREE.Vector3(...NODE_POS[i]), p2 = new THREE.Vector3(...NODE_POS[j]);
@@ -1591,110 +2047,166 @@
     ));
 
     /* ── HOW IT WORKS 3D ANIMATION OBJECTS ──
-       Storyline: [Phone L] --MRI doc--> [Database + Hash]-- > [real QR]--doc-- > [Phone R]
-       Real assets: phone.glb model, MRI / scan image texture, scannable QR matrix. */
+       Storyline: [Phone L] - MRI doc -> [Server + Hash] -> [real QR] - doc -> [Phone R]
+       All hardware is built procedurally in code — no.glb downloads, no decode stall. */
 
-    /* ===== ASSET CONFIG — change these to match the files you drop in ===== */
+    /* ===== ASSET CONFIG ===== */
     const HIW = {
-      PHONE_L_URL: 'assets/i_phone_12_pro.glb',   // sender phone (left)
-      PHONE_R_URL: 'assets/google_pixel_7_pro.glb', // receiver phone (right)
       PHONE_L_WALLPAPER: 'assets/image copy.png',   // sender phone screen
       PHONE_R_WALLPAPER: 'assets/image copy 2.png', // receiver phone screen
-      PHONE_TARGET_H: 5.2,                   // on-screen phone height in world units
-      PHONE_BASE_ROT: { x: 0, y: 0, z: 0 },  // tweak if a model faces the wrong way
-      MRI_TEXTURE_URL: 'assets/mri_scan.png', // your MRI / body-scan / prescription image
+      MRI_TEXTURE_URL: 'assets/mri_scan.png',       // MRI / body-scan / prescription image
       QR_TEXT: 'https://docpat.app/d/DEMO-2024-0142' // the URL the real QR encodes
     };
-    /* ===================================================================== */
+    /* ======================== */
 
     const hiwGroup = new THREE.Group();
     hiwGroup.position.set(0, -100, 0); // Placed far below the main scene
     scene.add(hiwGroup);
 
-    // ── PHONES ──────────────────────────────────────────────────────────
-    // Animation runs on the wrapper Group; the real model sits inside it.
+    // ── PROCEDURAL PHONES ───────────────────────────────────────────────
+    function roundedRectShape(w, h, r) {
+      const s = new THREE.Shape();
+      const x = -w / 2, y = -h / 2;
+      s.moveTo(x + r, y);
+      s.lineTo(x + w - r, y); s.absarc(x + w - r, y + r, r, -Math.PI / 2, 0);
+      s.lineTo(x + w, y + h - r); s.absarc(x + w - r, y + h - r, r, 0, Math.PI / 2);
+      s.lineTo(x + r, y + h); s.absarc(x + r, y + h - r, r, Math.PI / 2, Math.PI);
+      s.lineTo(x, y + r); s.absarc(x + r, y + r, r, Math.PI, Math.PI * 1.5);
+      return s;
+    }
+
+    // Screen texture: rounded-corner wallpaper + status bar + punch-hole + home bar,
+    // drawn on a canvas so the screen looks like a live phone UI.
+    function makeScreenTexture(wallpaperUrl, accent) {
+      const cw = 512, ch = 1024, r = 64;
+      const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+      const ctx = c.getContext('2d');
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 4;
+
+      function draw(img) {
+        ctx.clearRect(0, 0, cw, ch);
+        ctx.save();
+        ctx.beginPath(); ctx.roundRect(0, 0, cw, ch, r); ctx.clip();
+        if (img) {
+          // cover-fit
+          const a = img.width / img.height, ca = cw / ch;
+          let dw, dh;
+          if (a > ca) { dh = ch; dw = ch * a; } else { dw = cw; dh = cw / a; }
+          ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+        } else {
+          const grd = ctx.createLinearGradient(0, 0, cw, ch);
+          grd.addColorStop(0, '#0c4a6e'); grd.addColorStop(1, '#082f49');
+          ctx.fillStyle = grd; ctx.fillRect(0, 0, cw, ch);
+        }
+        // status bar
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.font = '600 26px Inter, sans-serif';
+        ctx.fillText('9:41', 42, 52);
+        // signal + battery glyphs
+        ctx.fillRect(cw - 70, 32, 34, 16);
+        ctx.fillRect(cw - 33, 37, 4, 6);
+        for (let i = 0; i < 4; i++) ctx.fillRect(cw - 130 + i * 9, 46 - i * 4, 6, 6 + i * 4);
+        // punch-hole camera
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.arc(cw / 2, 44, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#1e3a5f';
+        ctx.beginPath(); ctx.arc(cw / 2, 44, 6, 0, Math.PI * 2); ctx.fill();
+        // home indicator
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath(); ctx.roundRect(cw / 2 - 70, ch - 26, 140, 9, 5); ctx.fill();
+        ctx.restore();
+        tex.needsUpdate = true;
+      }
+      draw(null);
+      if (wallpaperUrl) {
+        const img = new Image();
+        img.onload = () => draw(img);
+        img.src = wallpaperUrl;
+      }
+      return tex;
+    }
+
+    function makePhone(accent, wallpaperUrl) {
+      const g = new THREE.Group();
+      const PW = 1.72, PH = 3.52, PD = 0.16, PR = 0.26;
+
+      // frame / body — single low-poly extrusion
+      const bodyGeo = new THREE.ExtrudeGeometry(roundedRectShape(PW, PH, PR), {
+        depth: PD, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025,
+        bevelSegments: 2, curveSegments: 10
+      });
+      bodyGeo.translate(0, 0, -PD / 2);
+      const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({
+        color: 0x10203a, metalness: 0.9, roughness: 0.32
+      }));
+      g.add(body);
+
+      // glass back sheen
+      const back = new THREE.Mesh(
+        new THREE.ShapeGeometry(roundedRectShape(PW - 0.06, PH - 0.06, PR - 0.03), 10),
+        new THREE.MeshStandardMaterial({ color: 0x16263f, metalness: 0.65, roughness: 0.18 })
+      );
+      back.position.z = -PD / 2 - 0.026; back.rotation.y = Math.PI;
+      g.add(back);
+
+      // screen
+      const screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(PW - 0.13, PH - 0.13),
+        new THREE.MeshBasicMaterial({ map: makeScreenTexture(wallpaperUrl, accent), transparent: true })
+      );
+      screen.position.z = PD / 2 + 0.027;
+      g.add(screen);
+
+      // camera island (back, top-left) with two lenses + flash
+      const island = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(roundedRectShape(0.62, 0.62, 0.16), {
+          depth: 0.045, bevelEnabled: false, curveSegments: 8
+        }),
+        new THREE.MeshStandardMaterial({ color: 0x0b1830, metalness: 0.85, roughness: 0.4 })
+      );
+      island.position.set(-PW / 2 + 0.43, PH / 2 - 0.43, -PD / 2 - 0.045);
+      g.add(island);
+      const lensGeo = new THREE.CylinderGeometry(0.105, 0.105, 0.05, 18);
+      const lensMat = new THREE.MeshStandardMaterial({ color: 0x050b14, metalness: 0.6, roughness: 0.15 });
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x123a5e, metalness: 0.9, roughness: 0.05, emissive: 0x0a2540, emissiveIntensity: 0.4 });
+      [[-0.14, 0.14], [0.14, -0.14]].forEach(([lx, ly]) => {
+        const lens = new THREE.Mesh(lensGeo, lensMat);
+        lens.rotation.x = Math.PI / 2;
+        lens.position.set(island.position.x + lx, island.position.y + ly, island.position.z - 0.03);
+        const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.052, 14), glassMat);
+        glass.rotation.x = Math.PI / 2;
+        glass.position.copy(lens.position); glass.position.z -= 0.004;
+        g.add(lens, glass);
+      });
+
+      // side buttons
+      const btnMat = new THREE.MeshStandardMaterial({ color: 0x1c3050, metalness: 0.9, roughness: 0.3 });
+      const power = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.42, 0.07), btnMat);
+      power.position.set(PW / 2 + 0.03, 0.55, 0);
+      const volUp = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.26, 0.07), btnMat);
+      volUp.position.set(-PW / 2 - 0.03, 0.78, 0);
+      const volDn = volUp.clone(); volDn.position.y = 0.42;
+      g.add(power, volUp, volDn);
+
+      // accent edge light (subtle brand glow around the frame)
+      const rim = new THREE.Mesh(
+        new THREE.ShapeGeometry(roundedRectShape(PW + 0.02, PH + 0.02, PR + 0.01), 10),
+        new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.10, side: THREE.BackSide })
+      );
+      rim.position.z = 0;
+      g.add(rim);
+
+      g.scale.setScalar(5.2 / PH); // match previous on-screen height
+      return g;
+    }
+
     const phoneLeftGroup = new THREE.Group();
     const phoneRightGroup = new THREE.Group();
     hiwGroup.add(phoneLeftGroup, phoneRightGroup);
-
-    // Procedural fallback phone (shown until the .glb loads, or if it fails)
-    function proceduralPhone(accent, wallpaperUrl) {
-      const g = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.BoxGeometry(1.7, 3.3, 0.22),
-        new THREE.MeshStandardMaterial({ color: 0x0b1220, metalness: 0.6, roughness: 0.35 })
-      );
-      const screenMat = new THREE.MeshBasicMaterial({ color: 0x07263b, side: THREE.DoubleSide });
-      if (wallpaperUrl) {
-        new THREE.TextureLoader().load(wallpaperUrl, tex => {
-          tex.colorSpace = THREE.SRGBColorSpace;
-          screenMat.map = tex;
-          screenMat.needsUpdate = true;
-        });
-      }
-      const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 3.0), screenMat);
-      screen.position.z = 0.13;
-      g.add(body, screen);
-      return g;
-    }
-    let phoneL = proceduralPhone(0x38bdf8, HIW.PHONE_L_WALLPAPER); phoneLeftGroup.add(phoneL);
-    let phoneR = proceduralPhone(0x34d399, HIW.PHONE_R_WALLPAPER); phoneRightGroup.add(phoneR);
-
-    const gltfLoader = new GLTFLoader();
-    // Load one .glb, normalize it, and securely overlay the UI screen plane
-    function loadPhone(url, wrapper, getFallback, setFallback, wallpaperUrl) {
-      gltfLoader.load(url, gltf => {
-        const model = gltf.scene;
-
-        // Find bounding box before scaling
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3(); box.getSize(size);
-        const center = new THREE.Vector3(); box.getCenter(center);
-
-        // Scale and center the model
-        const s = HIW.PHONE_TARGET_H / (size.y || 1);
-        model.scale.setScalar(s);
-        model.position.sub(center.clone().multiplyScalar(s));
-
-        // Create a cohesive container for both the GLB and our custom screen
-        const container = new THREE.Group();
-        container.add(model);
-        container.rotation.set(HIW.PHONE_BASE_ROT.x, HIW.PHONE_BASE_ROT.y, HIW.PHONE_BASE_ROT.z);
-
-        // Map texture directly INTO the GLB's screen to fit perfectly inside the frame
-        if (wallpaperUrl) {
-          new THREE.TextureLoader().load(wallpaperUrl, tex => {
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.flipY = false; // GLTF models usually require flipped UVs
-
-            // Traverse the model to find the actual screen mesh
-            model.traverse(child => {
-              if (child.isMesh) {
-                const name = (child.name || '').toLowerCase();
-                const matName = (child.material && child.material.name ? child.material.name : '').toLowerCase();
-
-                // Heuristic to locate the screen
-                if (name.includes('screen') || name.includes('display') || matName.includes('screen') || matName.includes('display') || matName.includes('wallpaper')) {
-                  // Replace with a clean BasicMaterial so it isn't washed out by lights, 
-                  // but sits exactly within the GLB's native UV frame.
-                  child.material = new THREE.MeshBasicMaterial({
-                    map: tex,
-                    color: 0xffffff,
-                    side: THREE.DoubleSide
-                  });
-                }
-              }
-            });
-          });
-        }
-
-        wrapper.remove(getFallback());
-        wrapper.add(container);
-        setFallback(container);
-      }, undefined, err => console.warn('[HIW] phone .glb not loaded, using fallback:', url, err));
-    }
-    loadPhone(HIW.PHONE_L_URL, phoneLeftGroup, () => phoneL, m => phoneL = m, HIW.PHONE_L_WALLPAPER); // iPhone — sender
-    loadPhone(HIW.PHONE_R_URL, phoneRightGroup, () => phoneR, m => phoneR = m, HIW.PHONE_R_WALLPAPER); // Pixel — receiver
+    phoneLeftGroup.add(makePhone(0x38bdf8, HIW.PHONE_L_WALLPAPER));  // sender
+    phoneRightGroup.add(makePhone(0x34d399, HIW.PHONE_R_WALLPAPER)); // receiver
 
     // ── DOCUMENT (MRI / body scan) ──────────────────────────────────────
     const docGroup = new THREE.Group();
@@ -1730,46 +2242,70 @@
     }, undefined, err => console.warn('[HIW] MRI texture not loaded:', HIW.MRI_TEXTURE_URL, err));
     hiwGroup.add(docGroup);
 
-    // ── DATABASE (centre node — hashes & stores) ────────────────────────
+    // ── PROCEDURAL SERVER RACK (centre node — hashes & stores) ──────────
     const dbGroup = new THREE.Group();
-    const dbMesh = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.2, 1.2, 2.5, 48),
-      new THREE.MeshStandardMaterial({ color: 0x0369a1, emissive: 0x0369a1, emissiveIntensity: 0.5, metalness: 0.4, roughness: 0.3, transparent: true, opacity: 0.9 })
-    );
-    const dbWire = new THREE.LineSegments(
-      new THREE.WireframeGeometry(new THREE.CylinderGeometry(1.22, 1.22, 2.52, 20)),
-      new THREE.LineBasicMaterial({ color: 0x7dd3fc, transparent: true, opacity: 0.55 })
-    );
-    dbGroup.add(dbMesh, dbWire);
+    const serverLeds = []; // blinking status LEDs, pulsed in the render loop
+    {
+      const SW = 2.0, SH = 2.6, SD = 1.5, UNITS = 4;
+      const chassisMat = new THREE.MeshStandardMaterial({ color: 0x0e1c33, metalness: 0.85, roughness: 0.38 });
+      const panelMat = new THREE.MeshStandardMaterial({ color: 0x14304f, metalness: 0.75, roughness: 0.3 });
+      const railMat = new THREE.MeshStandardMaterial({ color: 0x0a5b8a, metalness: 0.9, roughness: 0.25, emissive: 0x0ea5e9, emissiveIntensity: 0.25 });
+
+      // chassis
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(SW, SH, SD), chassisMat);
+      dbGroup.add(chassis);
+
+      // vertical rails on the front corners
+      const railGeo = new THREE.BoxGeometry(0.07, SH + 0.06, 0.07);
+      [-1, 1].forEach(sx => {
+        const rail = new THREE.Mesh(railGeo, railMat);
+        rail.position.set(sx * (SW / 2 - 0.05), 0, SD / 2 + 0.02);
+        dbGroup.add(rail);
+      });
+
+      // rack units: front panels with vent slits, handles and LEDs
+      const uH = (SH - 0.3) / UNITS;
+      const ventGeo = new THREE.BoxGeometry(SW * 0.46, 0.035, 0.02);
+      const ventMat = new THREE.MeshStandardMaterial({ color: 0x081427, metalness: 0.5, roughness: 0.6 });
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x2a4a72, metalness: 0.95, roughness: 0.2 });
+      for (let u = 0; u < UNITS; u++) {
+        const y = SH / 2 - 0.25 - uH / 2 - u * uH;
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(SW - 0.18, uH - 0.1, 0.08), panelMat);
+        panel.position.set(0, y, SD / 2 + 0.04);
+        dbGroup.add(panel);
+
+        // vent slits
+        for (let v = 0; v < 3; v++) {
+          const vent = new THREE.Mesh(ventGeo, ventMat);
+          vent.position.set(-SW * 0.16, y + (v - 1) * 0.09, SD / 2 + 0.085);
+          dbGroup.add(vent);
+        }
+        // drive handle
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, uH - 0.22, 0.05), handleMat);
+        handle.position.set(SW * 0.33, y, SD / 2 + 0.1);
+        dbGroup.add(handle);
+
+        // two status LEDs per unit
+        for (let l = 0; l < 2; l++) {
+          const ledMat = new THREE.MeshBasicMaterial({ color: l === 0 ? 0x38bdf8 : 0x34d399, transparent: true, opacity: 0.9 });
+          const led = new THREE.Mesh(new THREE.CircleGeometry(0.034, 10), ledMat);
+          led.position.set(SW * 0.18 + l * 0.12, y + uH * 0.26, SD / 2 + 0.085);
+          serverLeds.push({ mat: ledMat, phase: u * 1.7 + l * 2.6 });
+          dbGroup.add(led);
+        }
+      }
+
+      // soft brand under-glow plinth
+      const plinth = new THREE.Mesh(
+        new THREE.BoxGeometry(SW + 0.14, 0.08, SD + 0.14),
+        new THREE.MeshStandardMaterial({ color: 0x0369a1, emissive: 0x0ea5e9, emissiveIntensity: 0.8, metalness: 0.6, roughness: 0.3 })
+      );
+      plinth.position.y = -SH / 2 - 0.04;
+      dbGroup.add(plinth);
+    }
     hiwGroup.add(dbGroup);
 
-    // ── REAL SERVER MODEL (assets/server.glb) — replaces the plain cylinder ──
-    gltfLoader.load('assets/server.glb', gltf => {
-      const server = gltf.scene;
-      // normalise: scale to the same footprint the cylinder occupied (~2.6 tall) & centre
-      const sBox = new THREE.Box3().setFromObject(server);
-      const sSize = new THREE.Vector3(); sBox.getSize(sSize);
-      const sCtr = new THREE.Vector3(); sBox.getCenter(sCtr);
-      const sScale = 2.6 / (sSize.y || 1);
-      server.scale.setScalar(sScale);
-      server.position.sub(sCtr.clone().multiplyScalar(sScale));
-      // let the emissive status LEDs / accent glow pop under the bloom pass
-      server.traverse(o => {
-        if (o.isMesh && o.material && o.material.emissive) {
-          o.material.emissiveIntensity = Math.max(o.material.emissiveIntensity || 1, 1.4);
-        }
-      });
-      // hide the procedural cylinder, show the real server
-      dbMesh.visible = false; dbWire.visible = false;
-      dbGroup.add(server);
-    }, undefined, err => console.warn('[HIW] server.glb not loaded, using cylinder fallback:', err));
-
-    // ── HASH ICOSAHEDRON (cryptographic hash born inside the DB) ─────────
-    const hashSphere = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(0.55, 1),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x7dd3fc, emissiveIntensity: 3.0, flatShading: true })
-    );
-    hiwGroup.add(hashSphere);
+    // Hash sphere removed per user request
 
     // ── QR CODE — built from a REAL scannable QR matrix (instanced tiles) ─
     const qrGroup = new THREE.Group();
@@ -1854,18 +2390,51 @@
     buildQR(HIW.QR_TEXT);
 
     /* ── Scroll & mouse ── */
-    let scrollP = 0, hiwScrollP = 0, mx = 0, my = 0;
+    let scrollP = 0, hiwScrollP = 0, mx = 0, my = 0, smx = 0, smy = 0;
     window.addEventListener('mousemove', e => { mx = (e.clientX / W() - .5) * 1.2; my = (e.clientY / H() - .5) * -.75; });
+    const gridEl = document.querySelector('.grid-bg');
+
+    /* ── CUSTOM CURSOR ── */
+    const cursorDot = document.getElementById('cursor-dot');
+    const cursorRing = document.getElementById('cursor-ring');
+    const cursorOK = matchMedia('(hover: hover) and (pointer: fine)').matches &&
+      !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let cx = W() / 2, cy = H() / 2, dotX = cx, dotY = cy, ringX = cx, ringY = cy;
+    let ringScale = 1, ringScaleT = 1, cursorLive = false;
+    if (cursorOK) {
+      window.addEventListener('mousemove', e => {
+        cx = e.clientX; cy = e.clientY;
+        if (!cursorLive) {
+          cursorLive = true;
+          dotX = ringX = cx; dotY = ringY = cy;
+          document.body.classList.add('cursor-on');
+          cursorDot.style.opacity = 1; cursorRing.style.opacity = 1;
+        }
+      });
+      document.addEventListener('mouseleave', () => {
+        cursorDot.style.opacity = 0; cursorRing.style.opacity = 0;
+      });
+      document.addEventListener('mouseenter', () => {
+        if (cursorLive) { cursorDot.style.opacity = 1; cursorRing.style.opacity = 1; }
+      });
+      const CLICKABLE = 'a, button, .pill, .ph-item, .feat-card, .sec-card, .bc-feat, .step-item, .store-btn';
+      document.addEventListener('mouseover', e => {
+        const hit = e.target.closest(CLICKABLE);
+        cursorRing.classList.toggle('cursor-hover', !!hit);
+        ringScaleT = hit ? 1.6 : 1;
+      });
+      document.addEventListener('mousedown', () => { ringScaleT = 0.8; });
+      document.addEventListener('mouseup', () => {
+        ringScaleT = cursorRing.classList.contains('cursor-hover') ? 1.6 : 1;
+      });
+    }
     const phEls = [0, 1, 2, 3].map(i => document.getElementById('ph' + i));
     const scrollLine = document.getElementById('scroll-line');
 
     ScrollTrigger.create({
-      trigger: '#anim-wrap', start: 'top top', end: 'bottom bottom', scrub: 0.8,
+      trigger: '#anim-wrap', start: 'top top', end: 'bottom bottom', scrub: 0.2,
       onUpdate(s) {
         scrollP = s.progress;
-        scrollLine.style.width = (scrollP * 100).toFixed(2) + '%';
-        const idx = scrollP < 0.18 ? 0 : scrollP < 0.50 ? 1 : scrollP < 0.76 ? 2 : 3;
-        phEls.forEach((el, i) => el.classList.toggle('active', i === idx));
 
         // Toggle 3D Animation Text Overlays
         const s2 = document.getElementById('step-2');
@@ -1880,7 +2449,7 @@
     });
 
     ScrollTrigger.create({
-      trigger: '#hiw-anim-wrap', start: 'top top', end: 'bottom bottom', scrub: 0.8,
+      trigger: '#hiw-anim-wrap', start: 'top top', end: 'bottom bottom', scrub: 0.2,
       onUpdate(s) {
         hiwScrollP = s.progress;
 
@@ -1959,14 +2528,93 @@
       edgeMats.forEach(m => { m.opacity = ea; });
     }
 
+    /* Cache the section offsets — reading getBoundingClientRect()
+       every frame forces a layout pass and is a major source of jank. */
+    const animWrapEl = document.getElementById('anim-wrap');
+    const featuresEl = document.getElementById('features');
+    const hiwWrapEl = document.getElementById('hiw-anim-wrap');
+    const blockchainEl = document.getElementById('blockchain');
+    const securityEl = document.getElementById('security');
+    const techEl = document.getElementById('tech');
+    const ctaEl = document.getElementById('cta');
+    let hiwTop = 0, blockchainTop = 0, featuresTop = 0, securityTop = 0, techTop = 0, ctaTop = 0, animRange = 1;
+    function docTop(el) {
+      let y = 0;
+      while (el) { y += el.offsetTop; el = el.offsetParent; }
+      return y;
+    }
+    function measureOffsets() {
+      hiwTop = docTop(hiwWrapEl);
+      blockchainTop = docTop(blockchainEl);
+      featuresTop = docTop(featuresEl);
+      securityTop = docTop(securityEl);
+      techTop = docTop(techEl);
+      ctaTop = docTop(ctaEl);
+      animRange = Math.max(1, animWrapEl.offsetHeight - window.innerHeight);
+    }
+    measureOffsets();
+    window.addEventListener('load', measureOffsets);
+
+    /* ── SITE-WIDE PHASE RAIL ──
+       Four stops cover the whole page:
+       Your Record (hero + cube story) · How It Works (features + demo) ·
+       Trust & Safety · Get App. Clicking an item jumps to that part. */
+    let railActive = -1;
+    function updateRail() {
+      const vh = window.innerHeight;
+      const marker = window.scrollY + vh * 0.45;
+      let idx;
+      if (marker < featuresTop) idx = 0;
+      else if (marker < blockchainTop) idx = 1;
+      else if (marker < techTop) idx = 2;
+      else idx = 3;
+      if (idx !== railActive) {
+        railActive = idx;
+        phEls.forEach((el, i) => el && el.classList.toggle('active', i === idx));
+      }
+      const maxScroll = document.documentElement.scrollHeight - vh;
+      scrollLine.style.width = (clamp(window.scrollY / (maxScroll || 1), 0, 1) * 100).toFixed(2) + '%';
+    }
+
+    window.addEventListener('scroll', updateRail, { passive: true });
+
+    phEls.forEach((el, i) => {
+      if (!el) return;
+      el.addEventListener('click', () => {
+        if (i === 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+        else {
+          const target = [null, featuresEl, blockchainEl, ctaEl][i];
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
     const clock = new THREE.Clock();
     (function loop() {
       requestAnimationFrame(loop);
       const t = clock.getElapsedTime();
+      updateRail();
       const cp = camAt(scrollP);
 
-      const hiwRect = document.getElementById('hiw-anim-wrap').getBoundingClientRect();
-      const scrollFactor = clamp(1 - (hiwRect.top / window.innerHeight), 0, 1);
+      /* ── CURSOR TILT — the background leans toward the mouse ──
+         smx/smy ease toward the raw cursor each frame, so the tilt glides
+         instead of snapping. Move right → scene's right side dips closer. */
+      smx += (mx - smx) * 0.06;
+      smy += (my - smy) * 0.06;
+      tiltGroup.rotation.y = -smx * 0.22;
+      tiltGroup.rotation.x = smy * 0.16;
+      if (gridEl) gridEl.style.transform = `translate3d(${(-smx * 26).toFixed(1)}px, ${(smy * 16).toFixed(1)}px, 0)`;
+
+      /* cursor followers: dot snaps fast, ring glides behind */
+      if (cursorOK && cursorLive) {
+        dotX += (cx - dotX) * 0.55; dotY += (cy - dotY) * 0.55;
+        ringX += (cx - ringX) * 0.16; ringY += (cy - ringY) * 0.16;
+        ringScale += (ringScaleT - ringScale) * 0.18;
+        cursorDot.style.transform = `translate3d(${dotX - 3.5}px, ${dotY - 3.5}px, 0)`;
+        cursorRing.style.transform = `translate3d(${ringX - 19}px, ${ringY - 19}px, 0) scale(${ringScale.toFixed(3)})`;
+      }
+
+      const scrollFactor = clamp(1 - ((hiwTop - window.scrollY) / window.innerHeight), 0, 1);
       const baseCamY = -100 * scrollFactor;
 
       const tx = cp.x + mx * .6, ty = cp.y + my * .4 + baseCamY, tz = cp.z;
@@ -1999,8 +2647,6 @@
       else if (scrollP < 0.52) modelGroup.rotation.y += .001;
       else modelGroup.rotation.y *= .97;
 
-      bloom.strength = 0.20;
-
       const meshAlpha = inv(0.58, 0.74, scrollP);
       meshGroup.visible = meshAlpha > 0.01;
       meshGroup.children.forEach(l => { l.material.opacity = meshAlpha * (0.55 + Math.sin(t * 1.1) * 0.12); });
@@ -2013,137 +2659,229 @@
          p1 Upload  | p2 Hash & Store | p3 QR Generation | p4 Transfer  */
       if (scrollFactor > 0) {
         // very gentle parallax sway instead of a full spin (keeps phones readable)
-        hiwGroup.rotation.y = Math.sin(hiwScrollP * Math.PI) * 0.12;
+        // + the same cursor lean as the rest of the background
+        hiwGroup.rotation.y = Math.sin(hiwScrollP * Math.PI) * 0.12 - smx * 0.14;
+        hiwGroup.rotation.x = smy * 0.10;
+
+        const blockchainScrollFactor = clamp(1 - ((blockchainTop - window.scrollY) / window.innerHeight), 0, 1);
+        const bcYOffset = blockchainScrollFactor * 14.0;
+        hiwGroup.position.set(0, -100 + bcYOffset, 0);
 
         const p1 = clamp(hiwScrollP / 0.25, 0, 1);          // Upload
         const p2 = clamp((hiwScrollP - 0.25) / 0.25, 0, 1); // Hash & Store
         const p3 = clamp((hiwScrollP - 0.50) / 0.25, 0, 1); // QR Generation
         const p4 = clamp((hiwScrollP - 0.75) / 0.25, 0, 1); // Transfer
         const ein = x => x * x; // accelerate-in easing
+        const hiwPortrait = W() < 768;
 
-        /* ── PHASE 1 — Sender phone (Left) & Database (Center-Left) enter kept at a distance ── */
-        const p1Phone = clamp(p1 / 0.6, 0, 1);
-        phoneLeftGroup.position.set(lerp(-12, -5, eout(p1Phone)), lerp(-2, 0, eout(p1Phone)), 0);
-        phoneLeftGroup.rotation.y = lerp(-Math.PI * 2.0, 0, eout(p1Phone));
-        phoneLeftGroup.rotation.x = lerp(-Math.PI * 0.5, 0, eout(p1Phone));
-        phoneLeftGroup.scale.setScalar(lerp(0.001, 1, eout(p1Phone)));
+        if (hiwPortrait) {
+          /* ── PORTRAIT (phones): the story runs TOP → BOTTOM ──
+             sender phone drops in from the top, the server rises below it,
+             the QR takes the middle, and the receiver phone comes up from
+             the bottom. Desktop keeps the original left-to-right staging. */
+          const PS = 0.72, phoneTopY = 1.0, serverY = -3.2, qrY = -0.9, phoneBotY = -3.2;
 
-        /* ── PHASE 2 — Database rises on the Center-Left ── */
-        const dbIn = eout(p1); // DB enters with phone
-        // In phase 3, DB will shift from center-left (-1.5) to far-left (-5)
-        const dbX = lerp(-1.5, -5, eout(p3));
-        dbGroup.position.set(dbX, lerp(-5, 0, dbIn), 0);
-        const dbPulse = 1 + Math.sin(t * 3) * 0.05 * p2 * (1 - p3);
-        dbGroup.scale.set(lerp(0.001, 1, dbIn) * dbPulse, lerp(0.001, 1, dbIn), lerp(0.001, 1, dbIn) * dbPulse);
-        dbGroup.rotation.y = t * 0.4 * p2;
-        dbMesh.material.emissiveIntensity = 0.5 + Math.sin(t * 3) * 0.35 * p2 * (1 - p3);
+          // Phase 1 — sender phone drops in from the TOP
+          const p1Phone = clamp(p1 / 0.6, 0, 1);
+          phoneLeftGroup.position.set(0, lerp(9, phoneTopY, eout(p1Phone)), 0);
+          phoneLeftGroup.rotation.y = lerp(-Math.PI * 2.0, 0, eout(p1Phone));
+          phoneLeftGroup.rotation.x = lerp(-Math.PI * 0.5, 0, eout(p1Phone));
+          phoneLeftGroup.scale.setScalar(lerp(0.001, PS, eout(p1Phone)));
 
-        // Hash sphere: orbits inside the DB
-        const hashUp = eout(clamp((p2 - 0.45) / 0.55, 0, 1));
-        hashSphere.position.set(dbX + Math.sin(t * 2) * 0.15 * p2, lerp(0, 1.9, hashUp), Math.cos(t * 2) * 0.15 * p2);
-        hashSphere.scale.setScalar(lerp(0.001, 1, clamp((p2 - 0.4) / 0.6, 0, 1)) * (1 - eout(p3)));
-        hashSphere.rotation.y = t * 2;
-
-        // Phase 2: Move the sender phone OUT to the left permanently
-        if (p2 > 0) {
-          phoneLeftGroup.position.x = lerp(-5, -40, ein(p2));
-        }
-
-        /* ── PHASE 3 — Database emits the real QR code, hovers centre ── */
-        qrGroup.position.set(0, Math.sin(t * 1.5) * 0.12 * p3 * (1 - p4 * 0.5), 0.5);
-        qrGroup.rotation.y = lerp(-Math.PI, Math.sin(t * 0.6) * 0.18, eout(p3));
-        if (qrInst) {
-          for (let i = 0; i < qrCount; i++) {
-            const m = qrModules[i];
-            const cp = clamp((p3 - m.order * 0.5) / 0.5, 0, 1);
-            const sc = lerp(0.001, 1, eout(cp));
-            qrDummy.position.set(m.x, m.y, 0);
-            qrDummy.rotation.set(0, lerp(Math.PI, 0, eout(cp)), 0);
-            qrDummy.scale.set(sc, sc, sc);
-            qrDummy.updateMatrix();
-            qrInst.setMatrixAt(i, qrDummy.matrix);
+          // Phase 2 — server rises from BELOW the phone
+          const dbIn = eout(p1);
+          const dbScale = lerp(0.001, 0.8, dbIn);
+          const dbPulse = 1 + Math.sin(t * 3) * 0.05 * p2 * (1 - p3);
+          dbGroup.position.set(0, lerp(-9, serverY, dbIn), 0);
+          dbGroup.scale.set(dbScale * dbPulse, dbScale, dbScale * dbPulse);
+          dbGroup.rotation.y = t * 0.4 * p2;
+          for (let i = 0; i < serverLeds.length; i++) {
+            const led = serverLeds[i];
+            led.mat.opacity = 0.35 + (Math.sin(t * (2.5 + p2 * 4) + led.phase) > 0 ? 0.6 : 0.05);
           }
-          qrInst.instanceMatrix.needsUpdate = true;
-          const scan = Math.sin(t * 6) * 0.5 + 0.5;
-          qrMat.emissiveIntensity = 0.7 + scan * 1.6 * p4;
-        } else if (qrGroup.userData.plane) {
-          const sc = lerp(0.001, 1, eout(p3));
-          qrGroup.userData.plane.scale.set(sc, sc, sc);
-          const scan = Math.sin(t * 6) * 0.5 + 0.5;
-          // Subtly pulse the bump scale to simulate scanning
-          qrMat.bumpScale = 0.05 + scan * 0.1 * p4;
-        }
-        // database completely shrinks away once it reaches the left side, removing overlap
-        if (p3 > 0) dbGroup.scale.multiplyScalar(lerp(1, 0.001, eout(p3)));
+          // the sender phone leaves through the top once its job is done
+          if (p2 > 0) phoneLeftGroup.position.y = lerp(phoneTopY, 14, ein(p2));
 
-        /* ── PHASE 4 — Receiver phone slides in from the right & scans the QR ── */
-        phoneRightGroup.position.set(lerp(12, 5, eout(p4)), lerp(-2, 0, eout(p4)), 0);
-        // Spin the receiver phone into view perfectly straight
-        phoneRightGroup.rotation.y = lerp(Math.PI * 2.0, 0, eout(p4));
-        phoneRightGroup.rotation.x = lerp(-Math.PI * 0.5, 0, eout(p4));
-        phoneRightGroup.scale.setScalar(lerp(0.001, 1, eout(p4)));
+          // Phase 3 — QR takes the middle; server sinks away below
+          qrGroup.position.set(0,
+            qrY + lerp(0, 2.3, eout(p4)) + Math.sin(t * 1.5) * 0.12 * p3 * (1 - p4 * 0.5), 0.5);
+          qrGroup.rotation.y = lerp(-Math.PI, Math.sin(t * 0.6) * 0.18, eout(p3));
+          if (qrGroup.userData.plane) {
+            const sc = lerp(0.001, 0.82, eout(p3));
+            qrGroup.userData.plane.scale.set(sc, sc, sc);
+            const scan = Math.sin(t * 6) * 0.5 + 0.5;
+            qrMat.bumpScale = 0.05 + scan * 0.1 * p4;
+          }
+          if (p3 > 0) {
+            dbGroup.scale.multiplyScalar(lerp(1, 0.001, eout(p3)));
+            dbGroup.position.y = lerp(serverY, -9, eout(p3));
+          }
 
-        /* ── DOCUMENT trajectory — the data carried through every stage ── */
-        const docStart = new THREE.Vector3(-4.4, 0.7, 1.3); // Starting point near phone
-        const dbPoint = new THREE.Vector3(-1.5, 0, 0);         // DB is on the left
+          // Phase 4 — receiver phone rises from the BOTTOM
+          phoneRightGroup.position.set(0, lerp(-9, phoneBotY, eout(p4)), 0);
+          phoneRightGroup.rotation.y = lerp(Math.PI * 2.0, 0, eout(p4));
+          phoneRightGroup.rotation.x = lerp(Math.PI * 0.5, 0, eout(p4));
+          phoneRightGroup.scale.setScalar(lerp(0.001, PS, eout(p4)));
 
-        if (hiwScrollP < 0.25) {
-          // Phase 1: rises out of the sender phone's screen AFTER phone finishes entering
-          if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; }
-          const p1Doc = clamp((p1 - 0.6) / 0.4, 0, 1);
-          const e = eout(p1Doc);
-          docGroup.position.set(lerp(-5, docStart.x, e), lerp(-0.3, docStart.y, e), lerp(0.2, docStart.z, e));
-          docGroup.rotation.set(lerp(Math.PI / 2, 0, e), lerp(-0.6, -0.2, e), 0);
-          docGroup.scale.setScalar(lerp(0.001, 0.9, e));
-        } else if (hiwScrollP < 0.50) {
-          // Phase 2: flies from phone to the database and is absorbed
-          const e = ein(p2);
-          docGroup.position.set(lerp(docStart.x, dbPoint.x, e), lerp(docStart.y, dbPoint.y, e), lerp(docStart.z, dbPoint.z, e));
-          docGroup.rotation.y = lerp(-0.2, Math.PI * 4, e);
-
-          // Visually "convert" the image into hash values mid-flight
-          if (p2 > 0.25) {
-            if (docMat.map !== hashTex) { docMat.map = hashTex; docMat.needsUpdate = true; }
-          } else {
+          // Document rides the story downward: phone → server → QR → phone
+          if (hiwScrollP < 0.25) {
             if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; }
+            const e = eout(clamp((p1 - 0.6) / 0.4, 0, 1));
+            docGroup.position.set(lerp(0, 0.12, e), lerp(phoneTopY - 0.1, phoneTopY - 0.4, e), lerp(0.5, 1.6, e));
+            docGroup.rotation.set(lerp(Math.PI / 2, 0, e), lerp(-0.6, -0.15, e), 0);
+            docGroup.scale.setScalar(lerp(0.001, 0.7, e));
+          } else if (hiwScrollP < 0.50) {
+            const e = ein(p2);
+            docGroup.position.set(lerp(0.12, 0, e), lerp(phoneTopY - 0.4, serverY, e), lerp(1.6, 0.4, e));
+            docGroup.rotation.y = lerp(-0.15, Math.PI * 4, e);
+            if (p2 > 0.25) { if (docMat.map !== hashTex) { docMat.map = hashTex; docMat.needsUpdate = true; } }
+            else if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; }
+            docGroup.scale.setScalar(lerp(0.7, 0.001, e));
+          } else if (hiwScrollP < 0.75) {
+            docGroup.scale.setScalar(0.001);
+          } else {
+            if (p4 > 0.4) { if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; } }
+            else if (docMat.map !== hashTex) { docMat.map = hashTex; docMat.needsUpdate = true; }
+            const grow = eout(clamp(p4 / 0.45, 0, 1));
+            const shrink = ein(clamp((p4 - 0.55) / 0.45, 0, 1));
+            const e = eio(p4);
+            docGroup.position.set(0, lerp(1.2, phoneBotY, e), lerp(0.6, 0.3, e));
+            docGroup.rotation.set(0, lerp(-Math.PI, 0, e), 0);
+            docGroup.scale.setScalar(0.7 * grow * (1 - shrink));
           }
-
-          docGroup.scale.setScalar(lerp(0.9, 0.001, ein(p2)));
-        } else if (hiwScrollP < 0.75) {
-          // Phase 3: held inside the system (represented by the QR)
-          docGroup.scale.setScalar(0.001);
         } else {
-          // Phase 4: emerges from the QR code and flies into the receiver phone
-          // It decrypts back into the original image smoothly
-          if (p4 > 0.4) {
-            if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; }
-          } else {
-            if (docMat.map !== hashTex) { docMat.map = hashTex; docMat.needsUpdate = true; }
+
+          /* ── PHASE 1 — Sender phone (Left) & Database (Center-Left) enter kept at a distance ── */
+          const p1Phone = clamp(p1 / 0.6, 0, 1);
+          phoneLeftGroup.position.set(lerp(-12, -5, eout(p1Phone)), lerp(-2, 0, eout(p1Phone)), 0);
+          phoneLeftGroup.rotation.y = lerp(-Math.PI * 2.0, 0, eout(p1Phone));
+          phoneLeftGroup.rotation.x = lerp(-Math.PI * 0.5, 0, eout(p1Phone));
+          phoneLeftGroup.scale.setScalar(lerp(0.001, 1, eout(p1Phone)));
+
+          /* ── PHASE 2 — Database rises on the Center-Left ── */
+          const dbIn = eout(p1); // DB enters with phone
+          // In phase 3, DB will shift from center-left (-1.5) to far-left (-5)
+          const dbX = lerp(-1.5, -5, eout(p3));
+          dbGroup.position.set(dbX, lerp(-5, 0, dbIn), 0);
+          const dbPulse = 1 + Math.sin(t * 3) * 0.05 * p2 * (1 - p3);
+          dbGroup.scale.set(lerp(0.001, 1, dbIn) * dbPulse, lerp(0.001, 1, dbIn), lerp(0.001, 1, dbIn) * dbPulse);
+          dbGroup.rotation.y = t * 0.4 * p2;
+          // blink the rack status LEDs — busier while hashing (phase 2)
+          for (let i = 0; i < serverLeds.length; i++) {
+            const led = serverLeds[i];
+            led.mat.opacity = 0.35 + (Math.sin(t * (2.5 + p2 * 4) + led.phase) > 0 ? 0.6 : 0.05);
           }
-          const grow = eout(clamp(p4 / 0.45, 0, 1));
-          const shrink = ein(clamp((p4 - 0.55) / 0.45, 0, 1)); // shrinks as it enters phone B
-          const e = eio(p4);
-          docGroup.position.set(lerp(0, 5, e), lerp(0, 0, e), lerp(0.5, 0.2, e));
-          docGroup.rotation.set(0, lerp(-Math.PI, -0.25, e), 0);
-          docGroup.scale.setScalar(0.9 * grow * (1 - shrink));
+
+          // Hash sphere removed
+
+          // Phase 2: Move the sender phone OUT to the left permanently
+          if (p2 > 0) {
+            phoneLeftGroup.position.x = lerp(-5, -40, ein(p2));
+          }
+
+          /* ── PHASE 3 — Database emits the real QR code, hovers centre ── */
+          qrGroup.position.set(0, Math.sin(t * 1.5) * 0.12 * p3 * (1 - p4 * 0.5), 0.5);
+          qrGroup.rotation.y = lerp(-Math.PI, Math.sin(t * 0.6) * 0.18, eout(p3));
+          if (qrInst) {
+            for (let i = 0; i < qrCount; i++) {
+              const m = qrModules[i];
+              const cp = clamp((p3 - m.order * 0.5) / 0.5, 0, 1);
+              const sc = lerp(0.001, 1, eout(cp));
+              qrDummy.position.set(m.x, m.y, 0);
+              qrDummy.rotation.set(0, lerp(Math.PI, 0, eout(cp)), 0);
+              qrDummy.scale.set(sc, sc, sc);
+              qrDummy.updateMatrix();
+              qrInst.setMatrixAt(i, qrDummy.matrix);
+            }
+            qrInst.instanceMatrix.needsUpdate = true;
+            const scan = Math.sin(t * 6) * 0.5 + 0.5;
+            qrMat.emissiveIntensity = 0.7 + scan * 1.6 * p4;
+          } else if (qrGroup.userData.plane) {
+            const sc = lerp(0.001, 1, eout(p3));
+            qrGroup.userData.plane.scale.set(sc, sc, sc);
+            const scan = Math.sin(t * 6) * 0.5 + 0.5;
+            // Subtly pulse the bump scale to simulate scanning
+            qrMat.bumpScale = 0.05 + scan * 0.1 * p4;
+          }
+          // database completely shrinks away once it reaches the left side, removing overlap
+          if (p3 > 0) dbGroup.scale.multiplyScalar(lerp(1, 0.001, eout(p3)));
+
+          /* ── PHASE 4 — Receiver phone slides in from the right & scans the QR ── */
+          phoneRightGroup.position.set(lerp(12, 5, eout(p4)), lerp(-2, 0, eout(p4)), 0);
+          // Spin the receiver phone into view perfectly straight
+          phoneRightGroup.rotation.y = lerp(Math.PI * 2.0, 0, eout(p4));
+          phoneRightGroup.rotation.x = lerp(-Math.PI * 0.5, 0, eout(p4));
+          phoneRightGroup.scale.setScalar(lerp(0.001, 1, eout(p4)));
+
+          /* ── DOCUMENT trajectory — the data carried through every stage ── */
+          const docStart = new THREE.Vector3(-4.4, 0.7, 1.3); // Starting point near phone
+          const dbPoint = new THREE.Vector3(-1.5, 0, 0);         // DB is on the left
+
+          if (hiwScrollP < 0.25) {
+            // Phase 1: rises out of the sender phone's screen AFTER phone finishes entering
+            if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; }
+            const p1Doc = clamp((p1 - 0.6) / 0.4, 0, 1);
+            const e = eout(p1Doc);
+            docGroup.position.set(lerp(-5, docStart.x, e), lerp(-0.3, docStart.y, e), lerp(0.2, docStart.z, e));
+            docGroup.rotation.set(lerp(Math.PI / 2, 0, e), lerp(-0.6, -0.2, e), 0);
+            docGroup.scale.setScalar(lerp(0.001, 0.9, e));
+          } else if (hiwScrollP < 0.50) {
+            // Phase 2: flies from phone to the database and is absorbed
+            const e = ein(p2);
+            docGroup.position.set(lerp(docStart.x, dbPoint.x, e), lerp(docStart.y, dbPoint.y, e), lerp(docStart.z, dbPoint.z, e));
+            docGroup.rotation.y = lerp(-0.2, Math.PI * 4, e);
+
+            // Visually "convert" the image into hash values mid-flight
+            if (p2 > 0.25) {
+              if (docMat.map !== hashTex) { docMat.map = hashTex; docMat.needsUpdate = true; }
+            } else {
+              if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; }
+            }
+
+            docGroup.scale.setScalar(lerp(0.9, 0.001, ein(p2)));
+          } else if (hiwScrollP < 0.75) {
+            // Phase 3: held inside the system (represented by the QR)
+            docGroup.scale.setScalar(0.001);
+          } else {
+            // Phase 4: emerges from the QR code and flies into the receiver phone
+            // It decrypts back into the original image smoothly
+            if (p4 > 0.4) {
+              if (mriTex && docMat.map !== mriTex) { docMat.map = mriTex; docMat.needsUpdate = true; }
+            } else {
+              if (docMat.map !== hashTex) { docMat.map = hashTex; docMat.needsUpdate = true; }
+            }
+            const grow = eout(clamp(p4 / 0.45, 0, 1));
+            const shrink = ein(clamp((p4 - 0.55) / 0.45, 0, 1)); // shrinks as it enters phone B
+            const e = eio(p4);
+            docGroup.position.set(lerp(0, 5, e), lerp(0, 0, e), lerp(0.5, 0.2, e));
+            docGroup.rotation.set(0, lerp(-Math.PI, -0.25, e), 0);
+            docGroup.scale.setScalar(0.9 * grow * (1 - shrink));
+          }
         }
       }
 
-      composer.render();
+      renderer.render(scene, cam);
     })();
 
     window.addEventListener('resize', () => {
       cam.aspect = W() / H(); cam.updateProjectionMatrix();
-      renderer.setSize(W(), H()); composer.setSize(W(), H());
-      bloom.resolution.set(W(), H());
+      renderer.setSize(W(), H());
+      measureOffsets();
     });
 
     /* ── Scroll-in reveal ── */
     const io = new IntersectionObserver(entries => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); });
     }, { threshold: .09 });
-    document.querySelectorAll('.feat-card,.step-item,.cblock,.bc-feat,.sec-card').forEach((el, i) => {
-      el.style.transitionDelay = `${i * .06}s`; io.observe(el);
+    document.querySelectorAll('.feat-card,.step-item,.cblock,.bc-feat,.sec-card').forEach(el => {
+      io.observe(el);
+    });
+    // Snappy local stagger within grid containers to prevent cumulative scroll delays
+    document.querySelectorAll('.feat-grid, .steps-flow, .bc-grid, .sec-grid').forEach(grid => {
+      const items = grid.querySelectorAll('.feat-card, .step-item, .cblock, .bc-feat, .sec-card');
+      items.forEach((item, idx) => {
+        item.style.transitionDelay = `${idx * 0.04}s`;
+      });
     });
   </script>
 </body>

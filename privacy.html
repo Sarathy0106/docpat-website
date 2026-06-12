@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — DocPat</title>
+  <meta name="description" content="How DocPat collects, protects and never reads your health data." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="legal.css" />
+</head>
+
+<body>
+  <nav>
+    <a class="logo" href="index.html">
+      <img src="assets/logo.svg" alt="DocPat Logo" class="logo-img" />
+      <img src="assets/font.png" alt="DocPat" class="logo-text" />
+    </a>
+    <a class="back-link" href="index.html">← Back to Home</a>
+  </nav>
+
+  <main>x
+    <p class="page-tag">Legal</p>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: June 12, 2026</p>
+
+    <div class="callout">
+      <p><strong>The short version:</strong> your medical documents are locked on your phone before they are uploaded
+        anywhere, and only you hold the key. We — and every storage service we use — only ever see locked, unreadable
+        data. We could not read your medical records even if we wanted to.</p>
+    </div>
+
+    <h2>1. Who We Are</h2>
+    <p>DocPat ("we", "us") is a private health record wallet that lets you store, verify, and share your medical
+      documents securely. This policy explains what information the DocPat mobile application and its supporting
+      services collect, how it is used, and the choices you have.</p>
+
+    <h2>2. Information We Collect</h2>
+
+    <h3>2.1 Account information</h3>
+    <ul>
+      <li><strong>Phone number</strong> — used for sign-in via one-time SMS passcode (OTP).</li>
+      <li><strong>Email address and basic profile</strong> (optional) — if you choose to sign in with Google.</li>
+      <li><strong>Account identifier (UID)</strong> — a random identifier created by our authentication provider.</li>
+    </ul>
+
+    <h3>2.2 Your medical documents — locked, always</h3>
+    <p>When you upload a document (photo, scan, or PDF), it is locked on your device with strong, industry-standard
+      protection before upload. Document details you enter — file name, document type, doctor name, hospital name,
+      date, and notes — are also locked on your device before being stored. <strong>We have no technical ability to
+        unlock or read any of this content.</strong> Your keys are kept in your phone's built-in secure storage and
+      never leave your device in a usable form.</p>
+
+    <h3>2.3 Activity and security records</h3>
+    <ul>
+      <li><strong>Usage events</strong> — uploads, shares, views, deletions and key-recovery actions are recorded in
+        an append-only audit log (metadata only, never document content).</li>
+      <li><strong>Device records</strong> — the list of devices you have authorized, so you can manage multi-device
+        access.</li>
+      <li><strong>IP address and request data</strong> — processed by our backend for rate limiting, abuse
+        prevention, and anomaly detection.</li>
+      <li><strong>Login events</strong> — successful and failed sign-in attempts, used for security monitoring and
+        brute-force protection.</li>
+      <li><strong>Seal references</strong> — the reference codes created when your documents receive their permanent
+        digital seal.</li>
+    </ul>
+
+    <h2>3. Where Your Data Lives</h2>
+    <table>
+      <tr>
+        <th>Data</th>
+        <th>Stored In</th>
+        <th>What that service can see</th>
+      </tr>
+      <tr>
+        <td>Document files</td>
+        <td>A distributed storage network</td>
+        <td>Locked, unreadable data only</td>
+      </tr>
+      <tr>
+        <td>Document details (names, notes, dates)</td>
+        <td>Our secure cloud database</td>
+        <td>Locked fields only</td>
+      </tr>
+      <tr>
+        <td>Document seal</td>
+        <td>A public, permanent ledger</td>
+        <td>A meaningless reference code and a date — no personal or medical information</td>
+      </tr>
+      <tr>
+        <td>Account &amp; sign-in data</td>
+        <td>Our sign-in provider</td>
+        <td>Phone number, optional email, account ID</td>
+      </tr>
+      <tr>
+        <td>Activity records &amp; safety alerts</td>
+        <td>Our secure cloud database</td>
+        <td>What happened and when — never document content</td>
+      </tr>
+      <tr>
+        <td>Key backup (optional)</td>
+        <td>Our secure cloud database</td>
+        <td>A locked backup that only your recovery PIN can open</td>
+      </tr>
+    </table>
+
+    <h2>4. Third-Party Services</h2>
+    <p>DocPat relies on a small number of trusted service providers, each receiving only the minimum described
+      above: a cloud platform for sign-in and database services, a distributed file-storage network that holds only
+      locked files, a public ledger that holds only meaningless seal codes, and an on-device text-recognition
+      service used when you scan a document. A current list of providers is available on request via the contact
+      details below. <strong>We do not sell, rent, or trade your information to anyone. We do not use your data for
+        advertising.</strong></p>
+
+    <h2>5. How We Use Information</h2>
+    <ul>
+      <li>To sign you in and sync your locked records across the devices you have authorized.</li>
+      <li>To give every document a permanent digital seal proving it existed, untouched, at a point in time.</li>
+      <li>To operate PIN-protected sharing, including approval requests, access logs, and revocation.</li>
+      <li>To protect the service — rate limiting, anomaly detection, brute-force lockouts, and breach defence.</li>
+      <li>To show you your own activity history.</li>
+    </ul>
+
+    <h2>6. Sharing Controlled by You</h2>
+    <p>Documents are shared only when you generate a PIN-protected QR code, and only with the person who scans it,
+      enters the correct PIN, and receives your explicit approval. Shares are time-limited, can be revoked by you at
+      any moment, and recipients view documents in screenshot-protected sessions without permanent copies. Every
+      access is recorded in your activity log.</p>
+
+    <h2>7. Retention &amp; Deletion</h2>
+    <ul>
+      <li><strong>Documents</strong> — deleting a document marks it inactive and removes it from your wallet view.
+        Because the storage network and the seal ledger are permanent by design, locked copies and seal codes may
+        persist; they remain permanently unreadable without your keys.</li>
+      <li><strong>Audit logs</strong> — kept in append-only form for security and integrity purposes; they cannot be
+        edited, by us or anyone else.</li>
+      <li><strong>Device records</strong> — deauthorized devices are retained in deactivated form for your audit
+        trail.</li>
+      <li><strong>Account deletion</strong> — you may request deletion of your account and associated personal data
+        (phone number, email, profile) by contacting us at the address below.</li>
+    </ul>
+
+    <h2>8. Security Measures</h2>
+    <p>Beyond locking your documents on your device, DocPat protects your account with PIN-protected recovery,
+      fingerprint and face unlock, screenshot blocking on shared views, round-the-clock monitoring for unusual
+      activity, permanent activity records that no one can edit, and the ability to freeze activity instantly in an
+      emergency.</p>
+
+    <h2>9. Your Rights</h2>
+    <p>Depending on your jurisdiction, you may have rights to access, correct, export, or delete your personal data,
+      and to object to or restrict certain processing. Because document content is locked with keys only you hold,
+      the most complete export of your records is available directly in the app on your device. To exercise any
+      right, contact us using the details below.</p>
+
+    <h2>10. Children</h2>
+    <p>DocPat is not directed at children under 13 (or the equivalent minimum age in your jurisdiction), and we do
+      not knowingly collect personal information from them.</p>
+
+    <h2>11. Changes to This Policy</h2>
+    <p>We may update this policy as the product evolves (DocPat is currently in beta). Material changes will be
+      announced in the app or on this page, with the "Last updated" date revised above.</p>
+
+    <h2>12. Contact</h2>
+    <p>Questions about privacy or data protection: <a
+        href="mailto:docpat.contact@gmail.com">docpat.contact@gmail.com</a>
+      — or visit our <a href="contact.html">Contact page</a>.</p>
+  </main>
+
+  <footer>
+    <p>© 2026 DocPat. All rights reserved.</p>
+    <div class="foot-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="contact.html">Contact Us</a>
+    </div>
+  </footer>
+</body>
+
+</html>

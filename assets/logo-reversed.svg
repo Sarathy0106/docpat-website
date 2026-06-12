@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DocPat logo, reversed">
+  <!-- Reversed variant for dark / blue surfaces -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0284c7"/>
+  <rect x="8"  y="8"  width="13.5" height="13.5" rx="3.5" fill="#ffffff" opacity="0.45"/>
+  <rect x="42.5" y="8"  width="13.5" height="13.5" rx="3.5" fill="#ffffff" opacity="0.45"/>
+  <rect x="8"  y="42.5" width="13.5" height="13.5" rx="3.5" fill="#ffffff" opacity="0.45"/>
+  <rect x="42.5" y="42.5" width="13.5" height="13.5" rx="3.5" fill="#ffffff" opacity="0.45"/>
+  <rect x="25.25" y="8"  width="13.5" height="13.5" rx="3.5" fill="#ffffff"/>
+  <rect x="8"  y="25.25" width="13.5" height="13.5" rx="3.5" fill="#ffffff"/>
+  <rect x="42.5" y="25.25" width="13.5" height="13.5" rx="3.5" fill="#ffffff"/>
+  <rect x="25.25" y="42.5" width="13.5" height="13.5" rx="3.5" fill="#ffffff"/>
+  <rect x="25.25" y="25.25" width="13.5" height="13.5" rx="3.5" fill="#ffffff"/>
+</svg>
