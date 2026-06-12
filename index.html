@@ -323,10 +323,10 @@
     }
 
     .hero-h1 {
-      font-size: clamp(42px, 5.5vw, 80px);
+      font-size: clamp(36px, 4.8vw, 60px);
       font-weight: 900;
-      letter-spacing: -3px;
-      line-height: 1.0;
+      letter-spacing: -2px;
+      line-height: 1.05;
       margin-bottom: 22px;
       animation: fadeUp .8s .25s both;
       color: var(--text);
@@ -1268,22 +1268,23 @@
         display: none;
       }
 
-      /* scroll-story overlays: full-width banners on phones */
+      /* scroll-story overlays on phones: readable cards pinned near the
+         top of the screen, with the 3D action playing below them */
       .anim-step {
         width: 86vw !important;
         left: 7vw !important;
         right: auto !important;
         text-align: left !important;
-      }
-
-      /* phone/server/QR story on phones: text sits at the top,
-         the 3D objects play out top-to-bottom underneath it */
-      #hiw-text-container .anim-step {
-        top: 11%;
+        top: 10%;
         transform: translateY(14px);
+        background: rgba(240, 249, 255, 0.94);
+        border: 1px solid rgba(14, 165, 233, 0.22);
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: 0 10px 34px rgba(2, 132, 199, 0.12);
       }
 
-      #hiw-text-container .anim-step.active {
+      .anim-step.active {
         transform: translateY(0);
       }
 
@@ -2436,15 +2437,24 @@
       onUpdate(s) {
         scrollP = s.progress;
 
-        // Toggle 3D Animation Text Overlays
+        /* On phones the hero is taller than one screen, so the story text
+           must wait until the hero content has fully scrolled away —
+           otherwise they stack on top of each other. */
+        const heroEl2 = document.getElementById('hero');
+        const heroClear = W() >= 768 ||
+          window.scrollY > (heroEl2 ? heroEl2.offsetHeight : 0) - window.innerHeight * 0.12;
+
+        // Toggle 3D Animation Text Overlays (wider step-1 window on phones,
+        // since the gate delays its start)
+        const mob = W() < 768;
         const s2 = document.getElementById('step-2');
-        if (s2) s2.classList.toggle('active', scrollP > 0.18 && scrollP < 0.40);
+        if (s2) s2.classList.toggle('active', heroClear && scrollP > 0.18 && scrollP < (mob ? 0.44 : 0.40));
 
         const s3 = document.getElementById('step-3');
-        if (s3) s3.classList.toggle('active', scrollP > 0.42 && scrollP < 0.65);
+        if (s3) s3.classList.toggle('active', heroClear && scrollP > (mob ? 0.46 : 0.42) && scrollP < 0.65);
 
         const s4 = document.getElementById('step-4');
-        if (s4) s4.classList.toggle('active', scrollP > 0.68 && scrollP < 0.90);
+        if (s4) s4.classList.toggle('active', heroClear && scrollP > 0.68 && scrollP < 0.90);
       }
     });
 
