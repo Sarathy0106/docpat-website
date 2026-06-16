@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — DocPat</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --sky: #0284c7;
+      --sky2: #075985;
+      --sky3: #0ea5e9;
+      --text: #0f172a;
+      --muted: #475569;
+      --bg: #f0f9ff;
+      --border: rgba(2, 132, 199, 0.22);
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      background-image:
+        linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14, 165, 233, 0.05) 1px, transparent 1px);
+      background-size: 72px 72px;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 28px 16px 16px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120%);
+      min-width: min(420px, calc(100vw - 32px));
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 20px 40px rgba(14, 165, 233, 0.15);
+      z-index: 1400;
+      transition: transform .35s cubic-bezier(.2, .8, .2, 1);
+      overflow: hidden;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .toast.success .toast-icon {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .toast.error .toast-icon {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .toast-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .toast-msg {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    .toast-bar {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 3px;
+      width: 100%;
+      transform-origin: left;
+      animation: bar-drain 3.5s linear forwards;
+    }
+
+    .toast.success .toast-bar {
+      background: #22c55e;
+    }
+
+    .toast.error .toast-bar {
+      background: #ef4444;
+    }
+
+    @keyframes bar-drain {
+      from {
+        transform: scaleX(1);
+      }
+
+      to {
+        transform: scaleX(0);
+      }
+    }
+
+    /* ── SHELL ── */
+    .auth-shell {
+      width: min(980px, 100%);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      box-shadow: 0 25px 60px rgba(14, 165, 233, 0.12);
+      animation: shell-in .45s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    @keyframes shell-in {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(.994);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ── LEFT PANEL ── */
+    .left-panel {
+      padding: 36px 44px 32px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .left-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 32px;
+      text-decoration: none;
+    }
+
+    .left-logo img.logo-img {
+      width: 34px;
+      height: 34px;
+    }
+
+    .left-logo img.logo-txt {
+      height: 28px;
+      width: auto;
+    }
+
+    .form-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 40px;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .form-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.55;
+    }
+
+    /* Steps */
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    /* Fade between steps */
+    @keyframes step-in {
+      from {
+        opacity: 0;
+        transform: translateX(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .step.active {
+      animation: step-in .3s ease both;
+    }
+
+    /* Back row */
+    .back-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .back-btn {
+      width: 38px;
+      height: 38px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .2s, background .2s;
+      flex-shrink: 0;
+    }
+
+    .back-btn:hover {
+      border-color: var(--sky);
+      background: rgba(14, 165, 233, 0.04);
+    }
+
+    /* Identifier chip */
+    .id-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 0 16px;
+      margin-bottom: 18px;
+      background: rgba(14, 165, 233, 0.04);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .id-chip button {
+      background: none;
+      border: none;
+      color: var(--sky);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* Phone input */
+    .phone-wrap {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid rgba(14, 165, 233, 0.28);
+      border-radius: 12px;
+      background: #fff;
+      overflow: hidden;
+      transition: border-color .2s, box-shadow .2s;
+      margin-bottom: 14px;
+    }
+
+    .phone-wrap:focus-within {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.10);
+    }
+
+    .phone-prefix {
+      padding: 0 14px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--sky2);
+      border-right: 1.5px solid rgba(14, 165, 233, 0.18);
+      background: rgba(14, 165, 233, 0.04);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .phone-prefix span {
+      margin-right: 6px;
+      font-size: 18px;
+    }
+
+    #phone-input {
+      flex: 1;
+      height: 52px;
+      border: none;
+      outline: none;
+      padding: 0 16px;
+      font-size: 16px;
+      color: var(--text);
+      background: transparent;
+    }
+
+    #phone-input::placeholder {
+      color: #94a3b8;
+    }
+
+    /* OTP input */
+    .otp-input {
+      width: 100%;
+      height: 64px;
+      border: 2px solid rgba(14, 165, 233, 0.28);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--text);
+      font-size: 30px;
+      letter-spacing: 14px;
+      text-align: center;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      margin-bottom: 10px;
+    }
+
+    .otp-input:focus {
+      border-color: var(--sky);
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.10);
+    }
+
+    /* Buttons */
+    .primary-btn {
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--sky), var(--sky2));
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .2s, box-shadow .2s;
+      box-shadow: 0 8px 24px rgba(2, 132, 199, 0.3);
+      margin-top: 4px;
+    }
+
+    .primary-btn:hover:not(:disabled) {
+      opacity: .92;
+      transform: translateY(-2px);
+      box-shadow: 0 14px 36px rgba(2, 132, 199, 0.35);
+    }
+
+    .primary-btn:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .resend-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: none;
+      border: none;
+      color: var(--sky);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 0;
+      transition: opacity .2s;
+    }
+
+    .resend-btn:disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    #recaptcha-container {
+      display: none;
+    }
+
+    .terms-note {
+      margin-top: 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.65;
+    }
+
+    .terms-note a {
+      color: var(--sky);
+      font-weight: 600;
+    }
+
+    .form-spacer {
+      flex: 1;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .right-panel {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-left: 1px solid rgba(2, 132, 199, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .right-panel::before {
+      display: none;
+    }
+
+    /* Carousel fills the full right panel */
+    .carousel {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .carousel-viewport {
+      flex: 1;
+      border-radius: 0;
+      overflow: hidden;
+      position: relative;
+      background: transparent;
+    }
+
+    .carousel-slide {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity .6s ease;
+    }
+
+    .carousel-slide.active {
+      opacity: 1;
+    }
+
+    .carousel-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 0;
+      background: rgba(240, 249, 255, 0.85);
+      backdrop-filter: blur(4px);
+      margin-top: 0;
+    }
+
+    .carousel-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 100px;
+      background: rgba(2, 132, 199, 0.22);
+      cursor: pointer;
+      transition: all .25s ease;
+    }
+
+    .carousel-dot.active {
+      width: 24px;
+      background: var(--sky);
+    }
+
+    .carousel-caption {
+      display: none;
+    }
+
+    /* ── FOOTER ── */
+    .page-footer {
+      margin-top: 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px 0;
+        justify-content: center;
+        min-height: 100dvh;
+      }
+
+      .auth-shell {
+        grid-template-columns: 1fr;
+        border-radius: 20px;
+        min-height: auto;
+        box-shadow: 0 16px 48px rgba(14, 165, 233, 0.12);
+        margin: 0 12px;
+      }
+
+      .right-panel {
+        display: none;
+      }
+
+      .left-panel {
+        padding: 32px 24px 28px;
+        justify-content: center;
+      }
+
+      .form-title {
+        font-size: 30px;
+      }
+
+      .form-sub {
+        font-size: 14px;
+        margin-bottom: 22px;
+      }
+
+      .left-logo {
+        margin-bottom: 24px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .auth-shell {
+        margin: 0 8px;
+        border-radius: 16px;
+      }
+
+      .left-panel {
+        padding: 24px 18px 20px;
+      }
+
+      .form-title {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toast-icon" id="toast-icon"></div>
+    <div>
+      <div class="toast-title" id="toast-title"></div>
+      <div class="toast-msg" id="toast-msg"></div>
+    </div>
+    <button class="toast-close" onclick="hideToast()">×</button>
+    <div class="toast-bar" id="toast-bar"></div>
+  </div>
+
+  <div class="auth-shell">
+
+    <!-- ── LEFT PANEL ── -->
+    <section class="left-panel">
+
+      <a href="index.html" class="left-logo">
+        <img src="assets/logo.svg" alt="DocPat Logo" class="logo-img" />
+        <img src="assets/font.png" alt="DocPat" class="logo-txt" />
+      </a>
+
+      <!-- STEP 1: Phone -->
+      <div class="step active" id="step-phone">
+        <h1 class="form-title">Welcome back.</h1>
+        <p class="form-sub">Enter your phone number to sign in or create your DocPat account.</p>
+
+        <div class="phone-wrap">
+          <div class="phone-prefix"><span>🇮🇳</span>+91</div>
+          <input type="tel" id="phone-input" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"
+            autocomplete="tel" />
+        </div>
+
+        <div id="recaptcha-container"></div>
+
+        <button class="primary-btn" id="send-btn" onclick="handleSendOTP()">Send OTP</button>
+
+        <p class="terms-note">
+          By continuing, you agree to DocPat's
+          <a href="terms.html" target="_blank">Terms of Service</a> &amp;
+          <a href="privacy.html" target="_blank">Privacy Policy</a>
+        </p>
+      </div>
+
+      <!-- STEP 2: OTP -->
+      <div class="step" id="step-otp">
+        <div class="back-row">
+          <button class="back-btn" onclick="backToPhone()" aria-label="Back">←</button>
+          <h1 class="form-title" style="font-size:32px;">Verify OTP</h1>
+        </div>
+        <p class="form-sub" style="margin-bottom:16px;">
+          A 6-digit OTP has been sent to your number
+        </p>
+
+        <div class="id-chip">
+          <span id="masked-phone-display">+91 ••••••••••</span>
+          <button onclick="backToPhone()">Change</button>
+        </div>
+
+        <input type="text" class="otp-input" id="otp-input" inputmode="numeric" maxlength="6" placeholder="• • • • • •"
+          autocomplete="one-time-code" />
+
+        <button class="resend-btn" id="resend-btn" onclick="handleResend()" disabled>
+          Resend in 55s
+        </button>
+
+        <button class="primary-btn" id="verify-btn" onclick="handleVerifyOTP()">
+          Verify &amp; Sign In
+        </button>
+      </div>
+
+      <div class="form-spacer"></div>
+    </section>
+
+    <!-- ── RIGHT PANEL ── -->
+    <aside class="right-panel">
+      <div class="carousel">
+        <div class="carousel-viewport">
+          <div class="carousel-slide active" id="slide-0">
+            <img src="assets/banner1.png" alt="DocPat — All records in one place" />
+          </div>
+          <div class="carousel-slide" id="slide-1">
+            <img src="assets/banner2.png" alt="DocPat — Your data, always encrypted" />
+          </div>
+          <div class="carousel-slide" id="slide-2">
+            <img src="assets/banner3.png" alt="DocPat — Share in under 3 seconds" />
+          </div>
+        </div>
+
+        <div class="carousel-dots">
+          <div class="carousel-dot active" onclick="goToSlide(0)"></div>
+          <div class="carousel-dot" onclick="goToSlide(1)"></div>
+          <div class="carousel-dot" onclick="goToSlide(2)"></div>
+        </div>
+
+        <div class="carousel-caption">
+          <h3 id="carousel-title">Your Health Records. Safe.</h3>
+          <p id="carousel-sub">Zero-knowledge encrypted on your device.</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <p class="page-footer">© 2026 DocPat. All rights reserved. &nbsp;·&nbsp;
+    <a href="privacy.html" style="color:inherit;">Privacy</a> &nbsp;·&nbsp;
+    <a href="terms.html" style="color:inherit;">Terms</a>
+  </p>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const FIREBASE_CONFIG = {
+      apiKey: 'AIzaSyCuPNdqQHMHRmNCzZPYLLMTfC101AqXveY',
+      authDomain: 'docpat-84bd9.firebaseapp.com',
+      projectId: 'docpat-84bd9',
+      storageBucket: 'docpat-84bd9.firebasestorage.app',
+      messagingSenderId: '638379411939',
+      appId: '1:638379411939:web:4c37de2a1785f1291fb8d6'
+    };
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Disable reCAPTCHA app-check on localhost so test phone numbers work without
+    // triggering web-context-cancelled (-47) errors
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      auth.settings.appVerificationDisabledForTesting = true;
+    }
+
+    let confirmationResult = null;
+    let recaptchaVerifier = null;
+    let resendTimer = null;
+    let resendSecs = 55;
+
+    // Redirect if already logged in
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
+        location.href = redirect;
+      }
+    });
+
+    // ── reCAPTCHA helpers ───────────────────────────────────
+    // initRecaptcha: create ONCE per flow — never recreate between send & verify
+    // (recreating destroys the session confirmationResult depends on → error -47)
+    function initRecaptcha() {
+      if (recaptchaVerifier) return; // already exists, keep it
+      recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => { }
+      });
+    }
+
+    // resetRecaptcha: called only when starting a NEW send (back btn / resend / error)
+    function resetRecaptcha() {
+      if (recaptchaVerifier) {
+        try { recaptchaVerifier.clear(); } catch (_) { }
+        recaptchaVerifier = null;
+      }
+      // Replace the DOM node so Firebase can render a fresh verifier on next init
+      const old = document.getElementById('recaptcha-container');
+      if (old) {
+        const fresh = document.createElement('div');
+        fresh.id = 'recaptcha-container';
+        fresh.style.display = 'none';
+        old.parentNode.replaceChild(fresh, old);
+      }
+    }
+
+    // Phone input: strip any non-digit characters as user types
+    document.getElementById('phone-input').addEventListener('input', function () {
+      const pos = this.selectionStart;
+      const cleaned = this.value.replace(/\D/g, '');
+      if (this.value !== cleaned) {
+        this.value = cleaned;
+        this.setSelectionRange(pos - 1, pos - 1);
+      }
+    });
+
+    // OTP input: digits only
+    document.getElementById('otp-input').addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '');
+    });
+
+    // ── SEND OTP ────────────────────────────────────────────
+    window.handleSendOTP = async function () {
+      const raw = document.getElementById('phone-input').value.trim();
+      if (!/^\d{10}$/.test(raw)) {
+        showToast('Enter a valid 10-digit phone number', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('send-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      initRecaptcha();
+      const fullPhone = '+91' + raw;
+
+      try {
+        confirmationResult = await signInWithPhoneNumber(auth, fullPhone, recaptchaVerifier);
+
+        // Mask and show
+        const masked = '+91 ' + raw.slice(0, 2) + '••••••' + raw.slice(-2);
+        document.getElementById('masked-phone-display').textContent = masked;
+
+        showStep('otp');
+        startResendTimer();
+        showToast('OTP sent to your number!', 'success');
+      } catch (err) {
+        resetRecaptcha(); // verifier session is broken — clear it so next attempt starts fresh
+        showToast(err.message || 'Failed to send OTP. Try again.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send OTP';
+      }
+    };
+
+    // ── VERIFY OTP ──────────────────────────────────────────
+    window.handleVerifyOTP = async function () {
+      const code = document.getElementById('otp-input').value.trim();
+      if (code.length !== 6) {
+        showToast('Enter the 6-digit OTP', 'error');
+        return;
+      }
+      if (!confirmationResult) {
+        showToast('Session expired. Please start again.', 'error');
+        backToPhone();
+        return;
+      }
+
+      const btn = document.getElementById('verify-btn');
+      btn.disabled = true;
+      btn.textContent = 'Verifying…';
+
+      try {
+        const result = await confirmationResult.confirm(code);
+        const user = result.user;
+
+        // Try to get user name from Firestore (same as Flutter app)
+        let userName = '';
+        try {
+          const snap = await getDoc(doc(db, 'users', user.uid));
+          if (snap.exists()) {
+            const d = snap.data();
+            userName = d.name || d.displayName || d.fullName || '';
+          }
+        } catch { /* Firestore may not be accessible — graceful fallback */ }
+
+        if (!userName) userName = user.displayName || '';
+
+        // Persist auth info
+        localStorage.setItem('docpat_uid', user.uid);
+        localStorage.setItem('docpat_phone', user.phoneNumber || '');
+        localStorage.setItem('docpat_name', userName);
+        localStorage.setItem('docpat_login_time', new Date().toISOString());
+
+        showToast('Signed in successfully!', 'success');
+        setTimeout(() => {
+          const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
+          location.href = redirect;
+        }, 1400);
+      } catch (err) {
+        showToast(err.message || 'Invalid OTP. Please try again.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Verify & Sign In';
+      }
+    };
+
+    // ── BACK TO PHONE ───────────────────────────────────────
+    window.backToPhone = function () {
+      clearResendTimer();
+      resetRecaptcha(); // destroy verifier — next send flow will create a fresh one
+      document.getElementById('otp-input').value = '';
+      confirmationResult = null;
+      showStep('phone');
+    };
+
+    // ── RESEND OTP ──────────────────────────────────────────
+    window.handleResend = async function () {
+      const btn = document.getElementById('resend-btn');
+      if (btn.disabled) return;
+
+      const raw = document.getElementById('phone-input').value.trim();
+      resetRecaptcha(); // must destroy old verifier before resending
+      initRecaptcha();
+
+      try {
+        confirmationResult = await signInWithPhoneNumber(auth, '+91' + raw, recaptchaVerifier);
+        startResendTimer();
+        showToast('OTP resent!', 'success');
+      } catch (err) {
+        resetRecaptcha();
+        showToast(err.message || 'Could not resend OTP', 'error');
+      }
+    };
+
+    function startResendTimer() {
+      clearResendTimer();
+      resendSecs = 55;
+      const btn = document.getElementById('resend-btn');
+      btn.disabled = true;
+      btn.textContent = `Resend in ${resendSecs}s`;
+
+      resendTimer = setInterval(() => {
+        resendSecs -= 1;
+        if (resendSecs <= 0) {
+          clearResendTimer();
+          btn.disabled = false;
+          btn.textContent = 'Resend OTP';
+        } else {
+          btn.textContent = `Resend in ${resendSecs}s`;
+        }
+      }, 1000);
+    }
+
+    function clearResendTimer() {
+      if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+    }
+
+    // ── STEP SWITCHER ───────────────────────────────────────
+    function showStep(id) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById('step-' + id).classList.add('active');
+    }
+
+    // ── TOAST ───────────────────────────────────────────────
+    let toastTimer = null;
+    window.showToast = function (msg, type = 'error') {
+      const el = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const title = document.getElementById('toast-title');
+      const msgEl = document.getElementById('toast-msg');
+      const bar = document.getElementById('toast-bar');
+
+      el.className = 'toast ' + type;
+      icon.textContent = type === 'success' ? '✓' : '✕';
+      title.textContent = type === 'success' ? 'Success!' : 'Oops!';
+      msgEl.textContent = msg;
+
+      // restart bar animation
+      bar.style.animation = 'none';
+      bar.offsetHeight;
+      bar.style.animation = '';
+
+      el.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => hideToast(), 3500);
+    };
+
+    window.hideToast = function () {
+      document.getElementById('toast').classList.remove('show');
+    };
+
+    // ── CAROUSEL ────────────────────────────────────────────
+    const captions = [
+      { title: 'Carry Your Health Story', sub: 'Every report, scan, and prescription in one place.' },
+      { title: 'Zero-Knowledge Encryption', sub: 'Files locked on your device before they go anywhere.' },
+      { title: 'Share in Seconds', sub: 'QR code + PIN — revoke access anytime you want.' },
+    ];
+
+    let currentSlide = 0;
+    const totalSlides = 3;
+
+    window.goToSlide = function (idx) {
+      document.getElementById('slide-' + currentSlide).classList.remove('active');
+      document.querySelectorAll('.carousel-dot')[currentSlide].classList.remove('active');
+      currentSlide = idx;
+      document.getElementById('slide-' + currentSlide).classList.add('active');
+      document.querySelectorAll('.carousel-dot')[currentSlide].classList.add('active');
+      document.getElementById('carousel-title').textContent = captions[currentSlide].title;
+      document.getElementById('carousel-sub').textContent = captions[currentSlide].sub;
+    };
+
+    setInterval(() => {
+      goToSlide((currentSlide + 1) % totalSlides);
+    }, 5000);
+
+  </script>
+</body>
+
+</html>

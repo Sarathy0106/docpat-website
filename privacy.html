@@ -5,9 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy — DocPat</title>
-  <meta name="description" content="How DocPat collects, protects and never reads your health data." />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <meta name="description" content="How DocPat collects, protects, and never reads your health data — including subscription and payment information." />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="legal.css" />
 </head>
 
@@ -20,53 +20,55 @@
     <a class="back-link" href="index.html">← Back to Home</a>
   </nav>
 
-  <main>x
+  <main>
     <p class="page-tag">Legal</p>
     <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: June 12, 2026</p>
+    <p class="updated">Last updated: June 17, 2026</p>
 
     <div class="callout">
-      <p><strong>The short version:</strong> your medical documents are locked on your phone before they are uploaded
-        anywhere, and only you hold the key. We — and every storage service we use — only ever see locked, unreadable
-        data. We could not read your medical records even if we wanted to.</p>
+      <p><strong>The short version:</strong> your medical documents are AES-256 encrypted on your phone before anything is uploaded. We — and every storage provider we use — only ever see locked, unreadable ciphertext. We could not read your medical records even if we wanted to. Only your subscription account information and activity metadata are readable by us, and we describe exactly what that is below.</p>
     </div>
 
     <h2>1. Who We Are</h2>
-    <p>DocPat ("we", "us") is a private health record wallet that lets you store, verify, and share your medical
-      documents securely. This policy explains what information the DocPat mobile application and its supporting
-      services collect, how it is used, and the choices you have.</p>
+    <p>DocPat ("we", "us", "our") is a private health record wallet that lets you store, verify, and share your medical documents using zero-knowledge encryption. This Privacy Policy explains what personal information the DocPat mobile application and its supporting services collect, why, how it is used, and the choices you have. This policy applies to all users of the DocPat app and website.</p>
 
     <h2>2. Information We Collect</h2>
 
     <h3>2.1 Account information</h3>
     <ul>
-      <li><strong>Phone number</strong> — used for sign-in via one-time SMS passcode (OTP).</li>
-      <li><strong>Email address and basic profile</strong> (optional) — if you choose to sign in with Google.</li>
-      <li><strong>Account identifier (UID)</strong> — a random identifier created by our authentication provider.</li>
+      <li><strong>Phone number</strong> — required for sign-in via one-time SMS passcode (OTP). Processed by our authentication provider (Firebase Auth).</li>
+      <li><strong>Email address and Google profile</strong> (optional) — if you choose to sign in with Google.</li>
+      <li><strong>Account identifier (UID)</strong> — a randomly generated identifier assigned to your account by our authentication provider.</li>
+      <li><strong>Display name</strong> (optional) — if you choose to set one in the app.</li>
     </ul>
 
-    <h3>2.2 Your medical documents — locked, always</h3>
-    <p>When you upload a document (photo, scan, or PDF), it is locked on your device with strong, industry-standard
-      protection before upload. Document details you enter — file name, document type, doctor name, hospital name,
-      date, and notes — are also locked on your device before being stored. <strong>We have no technical ability to
-        unlock or read any of this content.</strong> Your keys are kept in your phone's built-in secure storage and
-      never leave your device in a usable form.</p>
+    <h3>2.2 Your medical documents — always encrypted</h3>
+    <p>When you upload a document (photo, scan, or PDF), it is encrypted entirely on your device using AES-256-GCM before it is transmitted or stored anywhere. Document metadata you enter — file name, document type, doctor name, hospital, date, and notes — are also encrypted on your device before storage. <strong>We have no technical ability to decrypt or read any of this content.</strong> Your encryption keys are generated and stored in your device's hardware secure enclave and never leave your device in usable form.</p>
 
-    <h3>2.3 Activity and security records</h3>
+    <h3>2.3 Subscription and billing data</h3>
     <ul>
-      <li><strong>Usage events</strong> — uploads, shares, views, deletions and key-recovery actions are recorded in
-        an append-only audit log (metadata only, never document content).</li>
-      <li><strong>Device records</strong> — the list of devices you have authorized, so you can manage multi-device
-        access.</li>
-      <li><strong>IP address and request data</strong> — processed by our backend for rate limiting, abuse
-        prevention, and anomaly detection.</li>
-      <li><strong>Login events</strong> — successful and failed sign-in attempts, used for security monitoring and
-        brute-force protection.</li>
-      <li><strong>Seal references</strong> — the reference codes created when your documents receive their permanent
-        digital seal.</li>
+      <li><strong>Subscription status</strong> — your current plan (Free, Basic, Pro, Clinic), billing cycle, and renewal date, so we can grant the correct storage limits and features.</li>
+      <li><strong>Purchase tokens</strong> — an anonymous token issued by Google Play that confirms your subscription is active. We do not receive or store payment card numbers, bank details, or any financial account information — these are handled entirely by Google.</li>
+      <li><strong>Transaction identifiers</strong> — order IDs provided by Google Play for billing support and dispute resolution.</li>
+    </ul>
+
+    <h3>2.4 Activity and security records</h3>
+    <ul>
+      <li><strong>Usage events</strong> — uploads, shares, views, deletions, and key-recovery actions recorded in an append-only audit log. Metadata only — never document content.</li>
+      <li><strong>Device records</strong> — the list of devices you have authorized, so you can manage multi-device access and revoke any device.</li>
+      <li><strong>IP address and request data</strong> — processed by our backend for rate limiting, abuse prevention, and anomaly detection. Not stored permanently.</li>
+      <li><strong>Sign-in events</strong> — successful and failed authentication attempts, used for security monitoring and brute-force protection.</li>
+      <li><strong>Blockchain seal references</strong> — the cryptographic reference codes recorded when your documents receive their Polygon blockchain seal. These contain no personal or medical information.</li>
+    </ul>
+
+    <h3>2.5 Technical and diagnostic data</h3>
+    <ul>
+      <li><strong>App crash reports</strong> — anonymous crash logs to help us fix bugs. No document content is included.</li>
+      <li><strong>Device type and OS version</strong> — used to ensure compatibility and diagnose technical issues.</li>
     </ul>
 
     <h2>3. Where Your Data Lives</h2>
+
     <table>
       <tr>
         <th>Data</th>
@@ -74,97 +76,135 @@
         <th>What that service can see</th>
       </tr>
       <tr>
-        <td>Document files</td>
-        <td>A distributed storage network</td>
-        <td>Locked, unreadable data only</td>
+        <td>Encrypted document files</td>
+        <td>Pinata (IPFS distributed storage)</td>
+        <td>Encrypted ciphertext only — unreadable without your keys</td>
       </tr>
       <tr>
-        <td>Document details (names, notes, dates)</td>
-        <td>Our secure cloud database</td>
-        <td>Locked fields only</td>
+        <td>Encrypted document metadata (names, notes, dates)</td>
+        <td>Firebase Firestore (Google Cloud)</td>
+        <td>Encrypted fields only — unreadable without your keys</td>
       </tr>
       <tr>
-        <td>Document seal</td>
-        <td>A public, permanent ledger</td>
-        <td>A meaningless reference code and a date — no personal or medical information</td>
+        <td>Blockchain seal</td>
+        <td>Polygon public blockchain</td>
+        <td>A cryptographic hash and timestamp — no personal or medical data</td>
       </tr>
       <tr>
         <td>Account &amp; sign-in data</td>
-        <td>Our sign-in provider</td>
-        <td>Phone number, optional email, account ID</td>
+        <td>Firebase Authentication (Google)</td>
+        <td>Phone number, optional email, account UID</td>
       </tr>
       <tr>
-        <td>Activity records &amp; safety alerts</td>
-        <td>Our secure cloud database</td>
-        <td>What happened and when — never document content</td>
+        <td>Subscription status &amp; purchase tokens</td>
+        <td>Firebase Firestore + Google Play</td>
+        <td>Plan type, renewal date, anonymous purchase token</td>
       </tr>
       <tr>
-        <td>Key backup (optional)</td>
-        <td>Our secure cloud database</td>
-        <td>A locked backup that only your recovery PIN can open</td>
+        <td>Activity audit logs</td>
+        <td>Firebase Firestore (Google Cloud)</td>
+        <td>Event type (e.g., "upload"), timestamp — never document content</td>
+      </tr>
+      <tr>
+        <td>Optional encrypted key backup</td>
+        <td>Firebase Firestore (Google Cloud)</td>
+        <td>An encrypted blob only your recovery PIN can unlock</td>
+      </tr>
+      <tr>
+        <td>Payment card &amp; bank details</td>
+        <td>Google Play (not stored by DocPat)</td>
+        <td>DocPat never receives or stores payment card information</td>
       </tr>
     </table>
 
-    <h2>4. Third-Party Services</h2>
-    <p>DocPat relies on a small number of trusted service providers, each receiving only the minimum described
-      above: a cloud platform for sign-in and database services, a distributed file-storage network that holds only
-      locked files, a public ledger that holds only meaningless seal codes, and an on-device text-recognition
-      service used when you scan a document. A current list of providers is available on request via the contact
-      details below. <strong>We do not sell, rent, or trade your information to anyone. We do not use your data for
-        advertising.</strong></p>
-
-    <h2>5. How We Use Information</h2>
+    <h2>4. Third-Party Service Providers</h2>
+    <p>DocPat relies on the following trusted service providers. Each receives only the minimum data described above:</p>
     <ul>
-      <li>To sign you in and sync your locked records across the devices you have authorized.</li>
-      <li>To give every document a permanent digital seal proving it existed, untouched, at a point in time.</li>
-      <li>To operate PIN-protected sharing, including approval requests, access logs, and revocation.</li>
-      <li>To protect the service — rate limiting, anomaly detection, brute-force lockouts, and breach defence.</li>
-      <li>To show you your own activity history.</li>
+      <li><strong>Google Firebase</strong> — authentication, database (Firestore), and crash reporting.</li>
+      <li><strong>Pinata / IPFS</strong> — decentralised encrypted file storage. Receives only ciphertext.</li>
+      <li><strong>Polygon (blockchain)</strong> — public ledger for document seals. Receives only cryptographic hashes.</li>
+      <li><strong>Twilio</strong> — SMS delivery for OTP login messages. Receives your phone number to deliver the OTP.</li>
+      <li><strong>Alchemy</strong> — read-only Polygon RPC provider. Does not receive personal data.</li>
+      <li><strong>Google Play</strong> — payment processing for subscriptions. Manages all financial transactions on our behalf.</li>
+      <li><strong>Railway</strong> — hosting for our Node.js backend signing server. Processes requests but does not store personal data.</li>
+    </ul>
+    <p><strong>We do not sell, rent, trade, or share your personal information with any third party for marketing or advertising purposes. We do not use your data for advertising.</strong></p>
+
+    <h2>5. How We Use Your Information</h2>
+    <ul>
+      <li>To authenticate your identity and allow sign-in via OTP or Google.</li>
+      <li>To sync your encrypted documents across the devices you authorize.</li>
+      <li>To issue and verify blockchain seals proving your documents are unmodified.</li>
+      <li>To operate PIN-protected document sharing, including approval requests and access revocation.</li>
+      <li>To manage your subscription — granting storage limits, processing renewals, and handling plan changes.</li>
+      <li>To process billing events received from Google Play (plan activation, renewal, cancellation, refund).</li>
+      <li>To protect the Service through rate limiting, anomaly detection, brute-force lockouts, and security monitoring.</li>
+      <li>To show you your own activity history and audit log.</li>
+      <li>To send service-related notifications (OTP, security alerts, subscription renewal reminders). We do not send promotional marketing without your explicit consent.</li>
+      <li>To investigate and resolve support requests and billing disputes.</li>
+      <li>To improve the Service using anonymised crash and diagnostic data.</li>
     </ul>
 
     <h2>6. Sharing Controlled by You</h2>
-    <p>Documents are shared only when you generate a PIN-protected QR code, and only with the person who scans it,
-      enters the correct PIN, and receives your explicit approval. Shares are time-limited, can be revoked by you at
-      any moment, and recipients view documents in screenshot-protected sessions without permanent copies. Every
-      access is recorded in your activity log.</p>
+    <p>Documents are shared only when you explicitly generate a PIN-protected QR code, and only with the person who scans it, enters the correct PIN, and receives your explicit in-app approval. Shares are time-limited (one-use, 24-hour, weekly, or monthly, as you choose) and can be revoked by you at any moment. Recipients view documents in screenshot-protected sessions without receiving permanent copies. Every access event is recorded in your audit log.</p>
 
-    <h2>7. Retention &amp; Deletion</h2>
+    <h2>7. Subscription Data Handling</h2>
+    <p>When you subscribe to a paid plan through Google Play:</p>
     <ul>
-      <li><strong>Documents</strong> — deleting a document marks it inactive and removes it from your wallet view.
-        Because the storage network and the seal ledger are permanent by design, locked copies and seal codes may
-        persist; they remain permanently unreadable without your keys.</li>
-      <li><strong>Audit logs</strong> — kept in append-only form for security and integrity purposes; they cannot be
-        edited, by us or anyone else.</li>
-      <li><strong>Device records</strong> — deauthorized devices are retained in deactivated form for your audit
-        trail.</li>
-      <li><strong>Account deletion</strong> — you may request deletion of your account and associated personal data
-        (phone number, email, profile) by contacting us at the address below.</li>
+      <li>Google processes your payment and notifies DocPat of your subscription status via a secure server-to-server notification.</li>
+      <li>DocPat stores your plan type, billing cycle, and an anonymous purchase token to verify your entitlement.</li>
+      <li>DocPat does <strong>not</strong> receive, process, or store payment card numbers, bank account details, or any other financial account information.</li>
+      <li>When you cancel or your subscription expires, DocPat updates your account to the Free plan. Your subscription history (plan type and dates) is retained for billing dispute resolution for up to 24 months.</li>
     </ul>
 
-    <h2>8. Security Measures</h2>
-    <p>Beyond locking your documents on your device, DocPat protects your account with PIN-protected recovery,
-      fingerprint and face unlock, screenshot blocking on shared views, round-the-clock monitoring for unusual
-      activity, permanent activity records that no one can edit, and the ability to freeze activity instantly in an
-      emergency.</p>
+    <h2>8. Data Retention &amp; Deletion</h2>
+    <ul>
+      <li><strong>Encrypted documents</strong> — deleting a document marks it inactive and removes it from your wallet. Because the IPFS storage network and Polygon blockchain are permanent by design, encrypted ciphertext and seal hashes may persist in those networks; they remain permanently unreadable without your keys.</li>
+      <li><strong>Audit logs</strong> — kept in append-only form for security and integrity purposes. Cannot be edited by us or anyone else.</li>
+      <li><strong>Subscription history</strong> — retained for up to 24 months for billing dispute purposes, then deleted.</li>
+      <li><strong>Device records</strong> — deauthorized devices are retained in deactivated form for your audit trail.</li>
+      <li><strong>Account deletion</strong> — you may request deletion of your account and all associated personal data (phone number, email, profile, activity logs) at any time. See Section 9 for how to request this.</li>
+    </ul>
 
-    <h2>9. Your Rights</h2>
-    <p>Depending on your jurisdiction, you may have rights to access, correct, export, or delete your personal data,
-      and to object to or restrict certain processing. Because document content is locked with keys only you hold,
-      the most complete export of your records is available directly in the app on your device. To exercise any
-      right, contact us using the details below.</p>
+    <h2>9. Your Rights &amp; Data Deletion Requests</h2>
+    <p>Depending on your jurisdiction, you may have the right to access, correct, export, restrict, or delete your personal data, and to object to certain processing. Because your document content is encrypted with keys only you hold, the most complete export of your records is available directly in the app on your device.</p>
+    <p>To exercise any right — including <strong>account and data deletion</strong> — contact us at:</p>
+    <ul>
+      <li>Email: <a href="mailto:docpat.contact@gmail.com">docpat.contact@gmail.com</a></li>
+      <li>Subject line: <em>Privacy Request — [your request type]</em></li>
+    </ul>
+    <p>We will respond within <strong>30 days</strong>. Identity verification may be required before processing sensitive requests. Account deletion requests are free of charge and will be completed within 30 days of verification.</p>
 
-    <h2>10. Children</h2>
-    <p>DocPat is not directed at children under 13 (or the equivalent minimum age in your jurisdiction), and we do
-      not knowingly collect personal information from them.</p>
+    <h2>10. Security Measures</h2>
+    <p>In addition to encrypting all documents on your device before upload, DocPat protects your account with:</p>
+    <ul>
+      <li>Hardware-backed key storage (device secure enclave)</li>
+      <li>PIN-protected key backup and recovery</li>
+      <li>Biometric authentication (fingerprint / face unlock)</li>
+      <li>Screenshot blocking on shared document views</li>
+      <li>Brute-force lockouts on OTP and PIN entry</li>
+      <li>Round-the-clock server-side anomaly detection</li>
+      <li>Append-only audit logs that cannot be tampered with</li>
+      <li>Instant activity freeze capability in the event of a security incident</li>
+    </ul>
+    <p>Despite these measures, no system is perfectly secure. We encourage you to keep your recovery PIN private and stored safely.</p>
 
-    <h2>11. Changes to This Policy</h2>
-    <p>We may update this policy as the product evolves (DocPat is currently in beta). Material changes will be
-      announced in the app or on this page, with the "Last updated" date revised above.</p>
+    <h2>11. Children's Privacy</h2>
+    <p>DocPat is not directed at children under 13 (or the equivalent minimum age in your jurisdiction). We do not knowingly collect personal information from children under this age. If you believe a child has provided us with personal information, please contact us at <a href="mailto:docpat.contact@gmail.com">docpat.contact@gmail.com</a> and we will delete it promptly.</p>
 
-    <h2>12. Contact</h2>
-    <p>Questions about privacy or data protection: <a
-        href="mailto:docpat.contact@gmail.com">docpat.contact@gmail.com</a>
-      — or visit our <a href="contact.html">Contact page</a>.</p>
+    <h2>12. International Data Transfers</h2>
+    <p>Our service providers (Google, Pinata, Twilio) may process data in countries outside India. These transfers are governed by appropriate safeguards including standard contractual clauses and data processing agreements. By using the Service, you consent to such transfers to the extent permitted by applicable law.</p>
+
+    <h2>13. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy as the Service evolves. Material changes (such as new types of data collection or new uses) will be announced in the app or by email at least <strong>14 days before</strong> they take effect, with the "Last updated" date revised above. Continued use of the Service after changes take effect constitutes acceptance of the updated policy.</p>
+
+    <h2>14. Contact &amp; Data Controller</h2>
+    <p>DocPat is the data controller for personal data processed under this policy. For privacy questions, data requests, or concerns:</p>
+    <ul>
+      <li>Email: <a href="mailto:docpat.contact@gmail.com">docpat.contact@gmail.com</a></li>
+      <li>Full contact options: <a href="contact.html">Contact page</a></li>
+    </ul>
+    <p>We aim to respond to all privacy-related enquiries within 5 business days.</p>
   </main>
 
   <footer>

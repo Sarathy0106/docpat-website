@@ -2,11 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "docpat",
+      "name": "docpat-website",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "."],
-      "port": 3000,
-      "autoPort": true
+      "runtimeArgs": ["serve", "-l", "3000", "."],
+      "port": 3000
     }
   ]
 }
