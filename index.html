@@ -3880,9 +3880,13 @@
       }
     });
 
-    window.handleLogout = async function () {
-      // 1. Sign out of Firebase (kills the persisted auth session)
-      try { await signOut(_fbAuth); } catch (err) { console.error('Sign out error:', err); }
+    window.handleLogout = function () {
+      // Bulletproof: every step is guarded so NOTHING can block the final redirect.
+      // (The old version awaited signOut(); if that network call hung, the page
+      //  never redirected and the button looked dead.)
+
+      // 1. Sign out of Firebase in the background — never awaited, never throws
+      try { signOut(_fbAuth).catch(() => {}); } catch (e) {}
 
       // 2. Clear localStorage + sessionStorage
       try {
@@ -3890,15 +3894,17 @@
         sessionStorage.clear();
       } catch (e) {}
 
-      // 3. Clear docpat cookies (try every path variant so none linger)
-      ['docpat_phone', 'docpat_name', 'docpat_uid'].forEach(name => {
-        ['/', '', location.pathname].forEach(p => {
-          document.cookie = name + '=; max-age=0; path=' + p + '; SameSite=Lax';
-          document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + p;
+      // 3. Clear docpat cookies (every path variant so none linger)
+      try {
+        ['docpat_phone', 'docpat_name', 'docpat_uid'].forEach(name => {
+          ['/', '', location.pathname].forEach(p => {
+            document.cookie = name + '=; max-age=0; path=' + p + '; SameSite=Lax';
+            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + p;
+          });
         });
-      });
+      } catch (e) {}
 
-      // 4. Hard redirect to the login page (replace = no back-button return)
+      // 4. ALWAYS redirect to the login page, no matter what happened above
       location.replace('login.html?logout=1');
     };
 
