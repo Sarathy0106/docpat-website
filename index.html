@@ -3676,7 +3676,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, onAuthStateChanged, signOut }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp }
+    import { getFirestore, doc, getDoc, updateDoc, setDoc, addDoc, collection, serverTimestamp }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const _fbApp = initializeApp({
@@ -3877,7 +3877,6 @@
     const DOCPAT_EMAIL = 'docpat.contact@gmail.com';
 
     window.handlePlanPurchase = async function (plan, billingOverride) {
-      const user = _fbAuth.currentUser;
       const billing = billingOverride || pricePeriod;
 
       // Free plan → send to the Play Store to download the app
@@ -3886,12 +3885,14 @@
         return;
       }
 
+      const localPhone = localStorage.getItem('docpat_phone');
+
       // Clinic plan → email enquiry to the DocPat team (no online checkout)
       if (plan === 'clinic') {
         const subject = encodeURIComponent('DocPat Clinic Plan — Enquiry');
         const body = encodeURIComponent(
           'Hi DocPat team,\n\nI am interested in the Clinic plan. Please share the details and next steps to get started.\n\n' +
-          (user?.phoneNumber ? 'My number: ' + user.phoneNumber + '\n' : '') +
+          (localPhone ? 'My number: ' + localPhone + '\n' : '') +
           '\nThanks.'
         );
         location.href = 'mailto:' + DOCPAT_EMAIL + '?subject=' + subject + '&body=' + body;
@@ -3899,15 +3900,15 @@
       }
 
       // Basic / Pro → Razorpay checkout. MUST be logged in, else go to login.
-      // currentUser may still be restoring from storage right after page load,
-      // so wait for the first auth-state result before deciding.
-      let payUser = user;
-      if (!payUser && localStorage.getItem('docpat_phone')) {
-        payUser = await new Promise(resolve => {
-          const unsub = onAuthStateChanged(_fbAuth, u => { unsub(); resolve(u); });
-          setTimeout(() => resolve(_fbAuth.currentUser), 3000);
-        });
+      let payUser = null;
+      if (localPhone) {
+        payUser = {
+          uid: localStorage.getItem('docpat_uid') || localPhone,
+          phoneNumber: localPhone,
+          displayName: localStorage.getItem('docpat_name') || 'DocPat User'
+        };
       }
+
       if (!payUser) {
         const returnUrl = 'index.html?plan=' + plan + '&billing=' + billing;
         location.href = 'login.html?redirect=' + encodeURIComponent(returnUrl);
@@ -3966,10 +3967,19 @@
           ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
           : null;
 
-      // Update user document
+      // Update user document (use setDoc with merge: true so it works for new/phone-only users)
       const userRef = doc(_fbDb, 'users', uid);
-      try { await updateDoc(userRef, { plan, plan_billing: billing, plan_price: amount, plan_activated_at: serverTimestamp(), plan_expires_at: expiresAt }); }
-      catch (_) { } // user doc may not exist yet in Firestore (phone-only users)
+      try {
+        await setDoc(userRef, {
+          plan,
+          plan_billing: billing,
+          plan_price: amount,
+          plan_activated_at: serverTimestamp(),
+          plan_expires_at: expiresAt
+        }, { merge: true });
+      } catch (err) {
+        console.error('Firestore save plan error:', err);
+      }
 
       // Log payment
       if (paymentId) {
