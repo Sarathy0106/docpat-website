@@ -1434,7 +1434,7 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
     }
 
-    .toggle-thumb.weekly {
+    .toggle-thumb.yearly {
       transform: translateX(20px);
     }
 
@@ -2372,7 +2372,9 @@
         <div class="toggle-track" onclick="togglePricePeriod()">
           <div class="toggle-thumb" id="price-thumb"></div>
         </div>
-        <span class="toggle-label" id="tgl-weekly" onclick="setPricePeriod('weekly')">Weekly</span>
+        <span class="toggle-label" id="tgl-yearly" onclick="setPricePeriod('yearly')">
+          Yearly <span class="save-badge">Save 10%</span>
+        </span>
       </div>
 
       <!-- "Always free" banner -->
@@ -2450,7 +2452,7 @@
           <div class="popular-badge">Most Popular</div>
           <p class="plan-name">Basic</p>
           <div class="plan-price"><span class="currency">₹</span><span class="price-num" data-monthly="99"
-              data-weekly="29">99</span><span class="period price-period">/mo</span></div>
+              data-yearly="1069">99</span><span class="period price-period">/mo</span></div>
           <div class="plan-annual-note" id="note-basic">&nbsp;</div>
           <p class="plan-desc">More room to store your growing medical history. Everything else stays free.</p>
           <ul class="plan-features">
@@ -2489,7 +2491,7 @@
         <div class="feat-card pricing-card">
           <p class="plan-name">Pro</p>
           <div class="plan-price"><span class="currency">₹</span><span class="price-num" data-monthly="299"
-              data-weekly="79">299</span><span class="period price-period">/mo</span></div>
+              data-yearly="3228">299</span><span class="period price-period">/mo</span></div>
           <div class="plan-annual-note" id="note-pro">&nbsp;</div>
           <p class="plan-desc">For families who upload actively — fits a full year of scans, reports, and prescriptions.
           </p>
@@ -2521,7 +2523,7 @@
         <div class="feat-card pricing-card">
           <p class="plan-name">Clinic</p>
           <div class="plan-price"><span class="currency">₹</span><span class="price-num" data-monthly="999"
-              data-weekly="269">999</span><span class="period price-period">/mo</span></div>
+              data-yearly="10789">999</span><span class="period price-period">/mo</span></div>
           <div class="plan-annual-note" id="note-clinic">&nbsp;</div>
           <p class="plan-desc">For clinics and care teams. Large shared storage, admin dashboard, and multi-user access.
           </p>
@@ -3645,31 +3647,38 @@
 
     // ── PRICING TOGGLE ──
     let pricePeriod = 'monthly';
-    const PLAN_PRICES = { basic: { monthly: 99, weekly: 29 }, pro: { monthly: 299, weekly: 79 }, clinic: { monthly: 999, weekly: 269 } };
+    const PLAN_PRICES = {
+      basic: { monthly: 99, yearly: 1069 },
+      pro: { monthly: 299, yearly: 3228 },
+      clinic: { monthly: 999, yearly: 10789 }
+    };
 
     window.setPricePeriod = function (period) {
       pricePeriod = period;
-      const weekly = period === 'weekly';
-      document.getElementById('price-thumb').classList.toggle('weekly', weekly);
-      document.getElementById('tgl-monthly').classList.toggle('active', !weekly);
-      document.getElementById('tgl-weekly').classList.toggle('active', weekly);
+      const yearly = period === 'yearly';
+      document.getElementById('price-thumb').classList.toggle('yearly', yearly);
+      document.getElementById('tgl-monthly').classList.toggle('active', !yearly);
+      document.getElementById('tgl-yearly').classList.toggle('active', yearly);
       document.querySelectorAll('.price-num').forEach(el => {
-        el.textContent = weekly ? el.dataset.weekly : el.dataset.monthly;
+        el.textContent = yearly ? el.dataset.yearly : el.dataset.monthly;
       });
       document.querySelectorAll('.price-period').forEach(el => {
-        el.textContent = weekly ? '/wk' : '/mo';
+        el.textContent = yearly ? '/yr' : '/mo';
       });
       Object.entries(PLAN_PRICES).forEach(([plan, prices]) => {
         const el = document.getElementById('note-' + plan);
         if (!el) return;
-        el.textContent = weekly
-          ? '≈ ₹' + (prices.weekly * 4).toLocaleString('en-IN') + '/month equivalent'
+        el.textContent = yearly
+          ? '≈ ₹' + Math.round(prices.yearly / 12).toLocaleString('en-IN') + '/mo · save ₹' + (prices.monthly * 12 - prices.yearly).toLocaleString('en-IN') + '/yr'
           : ' ';
       });
+      if (typeof markSubscribedPlan === 'function') {
+        markSubscribedPlan();
+      }
     };
 
     window.togglePricePeriod = function () {
-      window.setPricePeriod(pricePeriod === 'monthly' ? 'weekly' : 'monthly');
+      window.setPricePeriod(pricePeriod === 'monthly' ? 'yearly' : 'monthly');
     };
 
     // ── FIREBASE ─────────────────────────────────────────────────────────────
@@ -3710,15 +3719,26 @@
         if (snap.exists()) {
           const d = snap.data();
           const plan = d.plan || 'free';
+          const billing = d.plan_billing || 'monthly';
           localStorage.setItem('docpat_plan', plan);
+          localStorage.setItem('docpat_plan_billing', billing);
           applyPlanBadge(plan);
-          markSubscribedPlan(plan);
+
+          // Automatically set the pricing toggle to match the user's active billing period
+          if (plan !== 'free') {
+            setPricePeriod(billing);
+          } else {
+            markSubscribedPlan(plan, billing);
+          }
         }
       } catch (_) { }
     }
 
     // Mark the active paid plan's card as "Subscribed" and reset the others
-    function markSubscribedPlan(plan) {
+    function markSubscribedPlan(activePlan, activeBilling) {
+      const plan = activePlan || localStorage.getItem('docpat_plan') || 'free';
+      const billing = activeBilling || localStorage.getItem('docpat_plan_billing') || 'monthly';
+
       ['free', 'basic', 'pro', 'clinic'].forEach(p => {
         const b = document.getElementById('btn-' + p);
         if (!b) return;
@@ -3729,8 +3749,10 @@
         if (ribbon) ribbon.remove();
       });
 
-      // Only paid plans show a subscribed state
-      if (!plan || plan === 'free') return;
+      // Only paid plans show a subscribed state, AND the currently selected period (pricePeriod)
+      // must match the user's subscribed billing period (billing)!
+      if (!plan || plan === 'free' || pricePeriod !== billing) return;
+
       const btn = document.getElementById('btn-' + plan);
       if (!btn) return;
       btn.classList.add('plan-subscribed');
@@ -3754,7 +3776,7 @@
       if (!user) {
         if (loginBtn) loginBtn.style.display = '';
         if (avatarWrap) avatarWrap.style.display = 'none';
-        ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan'].forEach(k => localStorage.removeItem(k));
+        ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan', 'docpat_plan_billing'].forEach(k => localStorage.removeItem(k));
         return;
       }
 
@@ -3774,7 +3796,8 @@
 
       // Show cached plan immediately, then refresh from Firestore
       const cachedPlan = localStorage.getItem('docpat_plan');
-      if (cachedPlan) { applyPlanBadge(cachedPlan); markSubscribedPlan(cachedPlan); }
+      const cachedBilling = localStorage.getItem('docpat_plan_billing') || 'monthly';
+      if (cachedPlan) { applyPlanBadge(cachedPlan); markSubscribedPlan(cachedPlan, cachedBilling); }
       if (user.uid) loadUserPlan(user.uid);
 
       if (loginBtn) loginBtn.style.display = 'none';
@@ -3843,7 +3866,7 @@
 
       // 2. Clear localStorage + sessionStorage
       try {
-        ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan'].forEach(k => localStorage.removeItem(k));
+        ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan', 'docpat_plan_billing'].forEach(k => localStorage.removeItem(k));
         sessionStorage.clear();
       } catch (e) {}
 
@@ -3938,7 +3961,7 @@
         handler: async function (response) {
           await _savePlanToFirestore(payUser.uid, plan, billing, amount, response.razorpay_payment_id);
           _showPayToast('Payment successful! ' + PLAN_LABELS[plan] + ' plan activated.', true);
-          markSubscribedPlan(plan);
+          markSubscribedPlan(plan, billing);
           loadUserPlan(payUser.uid);
         },
         modal: {
@@ -3961,8 +3984,8 @@
 
     async function _savePlanToFirestore(uid, plan, billing, amount, paymentId) {
       const now = new Date();
-      const expiresAt = billing === 'weekly'
-        ? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      const expiresAt = billing === 'yearly'
+        ? new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000)
         : billing === 'monthly'
           ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
           : null;
@@ -3998,6 +4021,7 @@
       }
 
       localStorage.setItem('docpat_plan', plan);
+      localStorage.setItem('docpat_plan_billing', billing);
     }
 
     function _showPayToast(msg, success) {
