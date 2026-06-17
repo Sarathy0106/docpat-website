@@ -2416,7 +2416,8 @@
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg><span>No family / multi-user sharing</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-outline" onclick="window.handlePlanPurchase('free',0)">Start Free</a>
+          <a href="javascript:void(0)" class="plan-btn plan-btn-outline"
+            onclick="window.handlePlanPurchase('free',0)">Start Free</a>
         </div>
 
         <!-- BASIC -->
@@ -2455,7 +2456,8 @@
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg><span>No family / multi-user sharing</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-primary" onclick="window.handlePlanPurchase('basic')">Get Basic</a>
+          <a href="javascript:void(0)" class="plan-btn plan-btn-primary"
+            onclick="window.handlePlanPurchase('basic')">Get Basic</a>
         </div>
 
         <!-- PRO -->
@@ -2486,7 +2488,8 @@
                 <polyline points="20 6 9 17 4 12" />
               </svg><span>Priority email support</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-outline" onclick="window.handlePlanPurchase('pro')">Get Pro</a>
+          <a href="javascript:void(0)" class="plan-btn plan-btn-outline" onclick="window.handlePlanPurchase('pro')">Get
+            Pro</a>
         </div>
 
         <!-- CLINIC -->
@@ -2523,7 +2526,8 @@
                 <polyline points="20 6 9 17 4 12" />
               </svg><span>24/7 dedicated support + SLA</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-outline" onclick="window.handlePlanPurchase('clinic')">Get Clinic</a>
+          <a href="javascript:void(0)" class="plan-btn plan-btn-outline"
+            onclick="window.handlePlanPurchase('clinic')">Get Clinic</a>
         </div>
 
       </div>
@@ -3659,7 +3663,7 @@
       appId: '1:638379411939:web:4c37de2a1785f1291fb8d6'
     }, 'main-site');
     const _fbAuth = getAuth(_fbApp);
-    const _fbDb   = getFirestore(_fbApp);
+    const _fbDb = getFirestore(_fbApp);
 
     // ── PLAN BADGE HELPER ─────────────────────────────────────────────────────
     const PLAN_LABELS = { free: 'Free', basic: 'Basic', pro: 'Pro', clinic: 'Clinic' };
@@ -3671,7 +3675,7 @@
       const label = PLAN_LABELS[plan] || plan;
       const color = PLAN_COLORS[plan] || '#0284c7';
       el.textContent = '● ' + label + ' Plan';
-      el.style.color  = color;
+      el.style.color = color;
       el.style.display = '';
     }
 
@@ -3684,38 +3688,35 @@
           localStorage.setItem('docpat_plan', plan);
           applyPlanBadge(plan);
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // ── AUTH UI ───────────────────────────────────────────────────────────────
     function applyAuthUI(user) {
-      const loginBtn  = document.getElementById('nav-login-btn');
+      const loginBtn = document.getElementById('nav-login-btn');
       const avatarWrap = document.getElementById('nav-avatar');
-      const circle    = document.getElementById('avatar-circle');
+      const circle = document.getElementById('avatar-circle');
 
       if (!user) {
         if (loginBtn) loginBtn.style.display = '';
         if (avatarWrap) avatarWrap.style.display = 'none';
-        ['docpat_uid','docpat_name','docpat_phone','docpat_login_time','docpat_plan'].forEach(k => localStorage.removeItem(k));
+        ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan'].forEach(k => localStorage.removeItem(k));
         return;
       }
 
-      const name      = localStorage.getItem('docpat_name') || user.displayName || '';
-      const phone     = localStorage.getItem('docpat_phone') || user.phoneNumber || '';
+      const name = localStorage.getItem('docpat_name') || user.displayName || '';
+      const phone = localStorage.getItem('docpat_phone') || user.phoneNumber || '';
       const loginTime = localStorage.getItem('docpat_login_time') || '';
-      const initial   = (name || phone || '?')[0].toUpperCase();
+      const initial = (name || phone || '?')[0].toUpperCase();
 
       if (circle) circle.textContent = initial;
 
-      const elName  = document.getElementById('avatar-menu-name');
+      const elName = document.getElementById('avatar-menu-name');
       const elPhone = document.getElementById('avatar-menu-phone');
-      const elDate  = document.getElementById('avatar-menu-date');
-      if (elName)  elName.textContent  = name  || 'DocPat User';
+      const elDate = document.getElementById('avatar-menu-date');
+      if (elName) elName.textContent = name || 'DocPat User';
       if (elPhone) elPhone.textContent = phone || '—';
-      if (elDate && loginTime) {
-        const d = new Date(loginTime);
-        elDate.textContent = 'Logged in: ' + d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-      }
+
 
       // Show cached plan immediately, then refresh from Firestore
       const cachedPlan = localStorage.getItem('docpat_plan');
@@ -3735,16 +3736,41 @@
       }
     }
 
-    // Quick local render before Firebase responds
-    if (localStorage.getItem('docpat_uid')) {
+    // Restore session from 30-day cookie if localStorage was cleared
+    function _getCookie(name) {
+      const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='));
+      return match ? decodeURIComponent(match.split('=')[1]) : null;
+    }
+    if (!localStorage.getItem('docpat_phone')) {
+      const cookiePhone = _getCookie('docpat_phone');
+      if (cookiePhone) {
+        localStorage.setItem('docpat_phone', cookiePhone);
+        localStorage.setItem('docpat_login_time', new Date().toISOString());
+      }
+    }
+    if (!localStorage.getItem('docpat_name')) {
+      const cookieName = _getCookie('docpat_name');
+      if (cookieName) localStorage.setItem('docpat_name', cookieName);
+    }
+
+    // Quick local render using localStorage session (set by login.html)
+    if (localStorage.getItem('docpat_phone')) {
       applyAuthUI({
-        uid: localStorage.getItem('docpat_uid'),
+        uid: localStorage.getItem('docpat_phone'),
         displayName: localStorage.getItem('docpat_name'),
         phoneNumber: localStorage.getItem('docpat_phone')
       });
     }
 
-    onAuthStateChanged(_fbAuth, applyAuthUI);
+    // If Firebase Auth also has a real session, let it override.
+    // If Firebase returns null but we have a local session, keep the avatar.
+    onAuthStateChanged(_fbAuth, firebaseUser => {
+      if (firebaseUser) {
+        applyAuthUI(firebaseUser);
+      } else if (!localStorage.getItem('docpat_phone')) {
+        applyAuthUI(null);
+      }
+    });
 
     window.toggleAvatarMenu = function () {
       document.getElementById('avatar-menu').classList.toggle('open');
@@ -3758,9 +3784,35 @@
     });
 
     window.handleLogout = async function () {
-      await signOut(_fbAuth);
-      ['docpat_uid','docpat_name','docpat_phone','docpat_login_time','docpat_plan'].forEach(k => localStorage.removeItem(k));
-      location.reload();
+      // 1. Sign out of Firebase (kills the persisted auth session)
+      try { await signOut(_fbAuth); } catch (err) { console.error('Sign out error:', err); }
+
+      // 2. Clear localStorage + sessionStorage
+      try {
+        ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan'].forEach(k => localStorage.removeItem(k));
+        sessionStorage.clear();
+      } catch (e) {}
+
+      // 3. Clear docpat cookies (try every path variant so none linger)
+      ['docpat_phone', 'docpat_name', 'docpat_uid'].forEach(name => {
+        ['/', '', location.pathname].forEach(p => {
+          document.cookie = name + '=; max-age=0; path=' + p + '; SameSite=Lax';
+          document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + p;
+        });
+      });
+
+      // 4. Delete Firebase's IndexedDB stores so the session can't be restored
+      try {
+        if (window.indexedDB && indexedDB.databases) {
+          const dbs = await indexedDB.databases();
+          await Promise.all(dbs
+            .filter(d => d.name && d.name.toLowerCase().includes('firebase'))
+            .map(d => new Promise(res => { const r = indexedDB.deleteDatabase(d.name); r.onsuccess = r.onerror = r.onblocked = () => res(); })));
+        }
+      } catch (e) {}
+
+      // 5. Hard redirect to the login page (replace = no back-button return)
+      location.replace('login.html?logout=1');
     };
 
     // ── RAZORPAY PAYMENT ──────────────────────────────────────────────────────
@@ -3831,7 +3883,7 @@
     async function _savePlanToFirestore(uid, plan, billing, amount, paymentId) {
       const now = new Date();
       const expiresAt = billing === 'weekly'
-        ? new Date(now.getTime() + 7  * 24 * 60 * 60 * 1000)
+        ? new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
         : billing === 'monthly'
           ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
           : null;
@@ -3839,7 +3891,7 @@
       // Update user document
       const userRef = doc(_fbDb, 'users', uid);
       try { await updateDoc(userRef, { plan, plan_billing: billing, plan_price: amount, plan_activated_at: serverTimestamp(), plan_expires_at: expiresAt }); }
-      catch (_) {} // user doc may not exist yet in Firestore (phone-only users)
+      catch (_) { } // user doc may not exist yet in Firestore (phone-only users)
 
       // Log payment
       if (paymentId) {
@@ -3854,7 +3906,7 @@
             created_at: serverTimestamp(),
             expires_at: expiresAt
           });
-        } catch (_) {}
+        } catch (_) { }
       }
 
       localStorage.setItem('docpat_plan', plan);
@@ -3866,11 +3918,11 @@
       const t = document.createElement('div');
       t.textContent = msg;
       Object.assign(t.style, {
-        position:'fixed', bottom:'24px', left:'50%', transform:'translateX(-50%)',
+        position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
         background: success ? '#dcfce7' : '#fee2e2',
         color: success ? '#15803d' : '#b91c1c',
-        padding:'12px 22px', borderRadius:'12px', fontWeight:'600',
-        boxShadow:'0 8px 30px rgba(0,0,0,0.12)', zIndex:'9999', fontSize:'14px'
+        padding: '12px 22px', borderRadius: '12px', fontWeight: '600',
+        boxShadow: '0 8px 30px rgba(0,0,0,0.12)', zIndex: '9999', fontSize: '14px'
       });
       document.body.appendChild(t);
       setTimeout(() => t.remove(), 3500);
@@ -3973,7 +4025,7 @@
       margin-top: 6px;
       padding: 3px 8px;
       border-radius: 6px;
-      background: rgba(2,132,199,0.08);
+      background: rgba(2, 132, 199, 0.08);
       display: inline-block;
     }
 

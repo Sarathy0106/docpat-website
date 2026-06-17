@@ -355,7 +355,7 @@
       text-align: center;
       outline: none;
       transition: border-color .2s, box-shadow .2s;
-      margin-bottom: 10px;
+      margin-bottom: 24px;
     }
 
     .otp-input:focus {
@@ -410,6 +410,12 @@
     }
 
     #recaptcha-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      min-height: 0;
+    }
+    #recaptcha-container:empty {
       display: none;
     }
 
@@ -432,13 +438,7 @@
 
     /* ── RIGHT PANEL ── */
     .right-panel {
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
       border-left: 1px solid rgba(2, 132, 199, 0.1);
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      justify-content: flex-start;
-      padding: 0;
       position: relative;
       overflow: hidden;
     }
@@ -449,20 +449,15 @@
 
     /* Carousel fills the full right panel */
     .carousel {
-      width: 100%;
-      height: 100%;
-      position: relative;
+      position: absolute;
+      inset: 0;
       z-index: 1;
-      display: flex;
-      flex-direction: column;
     }
 
     .carousel-viewport {
-      flex: 1;
-      border-radius: 0;
+      position: absolute;
+      inset: 0;
       overflow: hidden;
-      position: relative;
-      background: transparent;
     }
 
     .carousel-slide {
@@ -480,17 +475,11 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center top;
+      object-position: center center;
     }
 
     .carousel-dots {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 0;
-      background: rgba(240, 249, 255, 0.85);
-      backdrop-filter: blur(4px);
-      margin-top: 0;
+      display: none;
     }
 
     .carousel-dot {
@@ -647,6 +636,18 @@
         </button>
       </div>
 
+      <!-- STEP 3: Name (new users only) -->
+      <div class="step" id="step-name">
+        <h1 class="form-title">What's your name?</h1>
+        <p class="form-sub">Help us personalise your DocPat experience. This is shown on your profile.</p>
+
+        <input type="text" class="otp-input" id="name-input" inputmode="text" maxlength="40"
+          placeholder="Your full name" autocomplete="name"
+          style="text-align:left; letter-spacing:0; font-size:18px; padding: 0 16px; margin-bottom: 50px;" />
+
+        <button class="primary-btn" id="name-btn" onclick="handleSubmitName()">Continue</button>
+      </div>
+
       <div class="form-spacer"></div>
     </section>
 
@@ -687,67 +688,92 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-    import { getAuth, onAuthStateChanged, RecaptchaVerifier, signInWithPhoneNumber }
+    import { getAuth, setPersistence, browserLocalPersistence, RecaptchaVerifier, signInWithPhoneNumber, updateProfile, signOut }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-    import { getFirestore, doc, getDoc }
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp }
       from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-    const FIREBASE_CONFIG = {
+    const _fbApp = initializeApp({
       apiKey: 'AIzaSyCuPNdqQHMHRmNCzZPYLLMTfC101AqXveY',
       authDomain: 'docpat-84bd9.firebaseapp.com',
       projectId: 'docpat-84bd9',
       storageBucket: 'docpat-84bd9.firebasestorage.app',
       messagingSenderId: '638379411939',
       appId: '1:638379411939:web:4c37de2a1785f1291fb8d6'
-    };
+    }, 'login-page');
+    const _fbAuth = getAuth(_fbApp);
+    const _fbDb = getFirestore(_fbApp);
+    _fbAuth.languageCode = 'en';
+    setPersistence(_fbAuth, browserLocalPersistence).catch(() => { });
 
-    const app = initializeApp(FIREBASE_CONFIG);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    // ── LOCALHOST TESTING MODE ──────────────────────────────────────────
+    // Firebase phone auth rejects real reCAPTCHA on localhost (auth/invalid-app-credential).
+    // On localhost we disable app verification → a mock reCAPTCHA auto-passes and
+    // WHITELISTED test numbers sign in with their preset code (no real SMS).
+    // On a real deployed domain this stays off, so production uses real reCAPTCHA + SMS.
+    const _isLocalhost = ['localhost', '127.0.0.1', ''].includes(location.hostname);
+    if (_isLocalhost) {
+      try { _fbAuth.settings.appVerificationDisabledForTesting = true; } catch (e) { }
+    }
 
-    // Disable reCAPTCHA app-check on localhost so test phone numbers work without
-    // triggering web-context-cancelled (-47) errors
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-      auth.settings.appVerificationDisabledForTesting = true;
+    // reCAPTCHA verifier (invisible). On localhost this renders as an auto-passing mock.
+    let _recaptcha = null;
+    function _getRecaptcha() {
+      if (!_recaptcha) {
+        _recaptcha = new RecaptchaVerifier(_fbAuth, 'recaptcha-container', { size: 'invisible' });
+        _recaptcha.render().catch(e => console.error('reCAPTCHA render:', e));
+      }
+      return _recaptcha;
+    }
+    function _resetRecaptcha() {
+      try { if (_recaptcha) _recaptcha.clear(); } catch (e) { }
+      _recaptcha = null;
+      const c = document.getElementById('recaptcha-container');
+      if (c) c.innerHTML = '';
     }
 
     let confirmationResult = null;
-    let recaptchaVerifier = null;
     let resendTimer = null;
     let resendSecs = 55;
+    let _pendingPhone = null;
 
-    // Redirect if already logged in
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
-        location.href = redirect;
-      }
-    });
+    function _getCookieVal(name) {
+      const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='));
+      return match ? decodeURIComponent(match.split('=')[1]) : null;
+    }
 
-    // ── reCAPTCHA helpers ───────────────────────────────────
-    // initRecaptcha: create ONCE per flow — never recreate between send & verify
-    // (recreating destroys the session confirmationResult depends on → error -47)
-    function initRecaptcha() {
-      if (recaptchaVerifier) return; // already exists, keep it
-      recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => { }
+    function _clearSession() {
+      ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan'].forEach(k => localStorage.removeItem(k));
+      ['docpat_phone', 'docpat_name'].forEach(n => {
+        document.cookie = n + '=; max-age=0; path=/; SameSite=Lax';
       });
     }
 
-    // resetRecaptcha: called only when starting a NEW send (back btn / resend / error)
-    function resetRecaptcha() {
-      if (recaptchaVerifier) {
-        try { recaptchaVerifier.clear(); } catch (_) { }
-        recaptchaVerifier = null;
+    function _persistSession(phone, name, uid) {
+      const exp = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+      localStorage.setItem('docpat_phone', phone);
+      localStorage.setItem('docpat_login_time', new Date().toISOString());
+      if (uid) localStorage.setItem('docpat_uid', uid);
+      document.cookie = `docpat_phone=${encodeURIComponent(phone)}; expires=${exp}; path=/; SameSite=Lax`;
+      if (name) {
+        localStorage.setItem('docpat_name', name);
+        document.cookie = `docpat_name=${encodeURIComponent(name)}; expires=${exp}; path=/; SameSite=Lax`;
       }
-      // Replace the DOM node so Firebase can render a fresh verifier on next init
-      const old = document.getElementById('recaptcha-container');
-      if (old) {
-        const fresh = document.createElement('div');
-        fresh.id = 'recaptcha-container';
-        fresh.style.display = 'none';
-        old.parentNode.replaceChild(fresh, old);
+    }
+
+    // If redirected here from logout, wipe everything and stay on login page
+    if (new URLSearchParams(location.search).get('logout')) {
+      _clearSession();
+      // Backstop: also kill any lingering Firebase auth session
+      signOut(_fbAuth).catch(() => { });
+      history.replaceState({}, '', 'login.html');
+    } else {
+      // Redirect if already logged in (localStorage or cookie session)
+      const _savedPhone = localStorage.getItem('docpat_phone') || _getCookieVal('docpat_phone');
+      if (_savedPhone) {
+        if (!localStorage.getItem('docpat_phone')) localStorage.setItem('docpat_phone', _savedPhone);
+        const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
+        location.href = redirect;
       }
     }
 
@@ -766,7 +792,7 @@
       this.value = this.value.replace(/\D/g, '');
     });
 
-    // ── SEND OTP ────────────────────────────────────────────
+    // ── SEND OTP (real Firebase Phone Auth) ─────────────────
     window.handleSendOTP = async function () {
       const raw = document.getElementById('phone-input').value.trim();
       if (!/^\d{10}$/.test(raw)) {
@@ -774,43 +800,51 @@
         return;
       }
 
-      const btn = document.getElementById('send-btn');
-      btn.disabled = true;
-      btn.textContent = 'Sending…';
-
-      initRecaptcha();
       const fullPhone = '+91' + raw;
+      _pendingPhone = fullPhone;
+
+      const btn = document.getElementById('send-btn') || document.querySelector('#step-phone button');
+      const oldText = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending OTP…'; }
 
       try {
-        confirmationResult = await signInWithPhoneNumber(auth, fullPhone, recaptchaVerifier);
+        const verifier = _getRecaptcha();
+        confirmationResult = await signInWithPhoneNumber(_fbAuth, fullPhone, verifier);
 
-        // Mask and show
         const masked = '+91 ' + raw.slice(0, 2) + '••••••' + raw.slice(-2);
         document.getElementById('masked-phone-display').textContent = masked;
 
+        if (btn) { btn.disabled = false; btn.textContent = oldText; }
         showStep('otp');
         startResendTimer();
-        showToast('OTP sent to your number!', 'success');
       } catch (err) {
-        resetRecaptcha(); // verifier session is broken — clear it so next attempt starts fresh
-        showToast(err.message || 'Failed to send OTP. Try again.', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Send OTP';
+        if (btn) { btn.disabled = false; btn.textContent = oldText; }
+        _resetRecaptcha();
+        console.error('Send OTP error:', err.code, err.message);
+        if (err.code === 'auth/operation-not-allowed' || (err.code && err.code.indexOf('-47') !== -1)) {
+          showToast('Phone sign-in is disabled. Enable Phone in Firebase Console → Authentication.', 'error');
+        } else if (err.code === 'auth/invalid-phone-number') {
+          showToast('That phone number is not valid.', 'error');
+        } else if (err.code === 'auth/too-many-requests') {
+          showToast('Too many attempts. Please wait a while and try again.', 'error');
+        } else if (err.code === 'auth/billing-not-enabled') {
+          showToast('SMS billing not enabled. Add a test number in Firebase, or enable billing.', 'error');
+        } else if (err.code === 'auth/captcha-check-failed' || err.code === 'auth/internal-error') {
+          showToast('Verification failed. Make sure localhost is an authorized domain.', 'error');
+        } else if (err.code === 'auth/invalid-app-credential') {
+          showToast('reCAPTCHA rejected. Add localhost to Authorized domains in Firebase Auth settings.', 'error');
+        } else {
+          showToast('Could not send OTP: ' + (err.code || err.message || 'unknown'), 'error');
+        }
       }
     };
 
-    // ── VERIFY OTP ──────────────────────────────────────────
+    // ── VERIFY OTP (confirm the real code) ──────────────────
     window.handleVerifyOTP = async function () {
       const code = document.getElementById('otp-input').value.trim();
-      if (code.length !== 6) {
-        showToast('Enter the 6-digit OTP', 'error');
-        return;
-      }
-      if (!confirmationResult) {
-        showToast('Session expired. Please start again.', 'error');
-        backToPhone();
-        return;
+      if (code.length < 6) { showToast('Enter the 6-digit OTP', 'error'); return; }
+      if (!confirmationResult || !confirmationResult.confirm) {
+        showToast('Session expired. Please start again.', 'error'); backToPhone(); return;
       }
 
       const btn = document.getElementById('verify-btn');
@@ -818,43 +852,111 @@
       btn.textContent = 'Verifying…';
 
       try {
-        const result = await confirmationResult.confirm(code);
-        const user = result.user;
+        // Confirm the OTP — this signs the user in with a phone-number UID.
+        // Same phone number → same Firebase UID across web AND the Flutter app.
+        const cred = await confirmationResult.confirm(code);
+        const user = cred.user;
+        const uid = user.uid;
+        const fullPhone = user.phoneNumber || _pendingPhone;
 
-        // Try to get user name from Firestore (same as Flutter app)
-        let userName = '';
-        try {
-          const snap = await getDoc(doc(db, 'users', user.uid));
-          if (snap.exists()) {
-            const d = snap.data();
-            userName = d.name || d.displayName || d.fullName || '';
-          }
-        } catch { /* Firestore may not be accessible — graceful fallback */ }
+        // ── Mirror the Flutter app's _saveUserToFirestore ──────────────
+        const ref = doc(_fbDb, 'users', uid);
+        const snap = await getDoc(ref);
+        let displayName = '';
 
-        if (!userName) userName = user.displayName || '';
+        if (!snap.exists()) {
+          // NEW USER → create the full document (same schema as the app)
+          await setDoc(ref, {
+            email: user.email || '',
+            phoneNumber: fullPhone || '',
+            displayName: '',
+            photoURL: '',
+            uid: uid,
+            aadhaarVerified: false,
+            createdAt: serverTimestamp(),
+            lastLoginAt: serverTimestamp(),
+          });
+        } else {
+          // EXISTING USER → update lastLoginAt (+ phone), same as the app
+          const data = snap.data();
+          displayName = data.displayName || data.name || '';
+          await updateDoc(ref, {
+            lastLoginAt: serverTimestamp(),
+            ...(fullPhone ? { phoneNumber: fullPhone } : {}),
+          });
+        }
 
-        // Persist auth info
-        localStorage.setItem('docpat_uid', user.uid);
-        localStorage.setItem('docpat_phone', user.phoneNumber || '');
-        localStorage.setItem('docpat_name', userName);
-        localStorage.setItem('docpat_login_time', new Date().toISOString());
+        _persistSession(fullPhone, displayName, uid);
 
-        showToast('Signed in successfully!', 'success');
-        setTimeout(() => {
-          const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
-          location.href = redirect;
-        }, 1400);
+        if (displayName) {
+          // Existing user with a name → straight to homepage
+          showToast('Welcome back, ' + displayName.split(' ')[0] + '!', 'success');
+          setTimeout(() => {
+            location.href = new URLSearchParams(location.search).get('redirect') || 'index.html';
+          }, 1200);
+        } else {
+          // New user (or no name yet) → ask for name
+          btn.disabled = false;
+          btn.textContent = 'Verify & Sign In';
+          showStep('name');
+          document.getElementById('name-input').focus();
+        }
       } catch (err) {
-        showToast(err.message || 'Invalid OTP. Please try again.', 'error');
         btn.disabled = false;
         btn.textContent = 'Verify & Sign In';
+        console.error('Verify error:', err.code, err.message);
+        if (err.code === 'auth/invalid-verification-code') {
+          showToast('Incorrect OTP. Please check and try again.', 'error');
+        } else if (err.code === 'auth/code-expired') {
+          showToast('OTP expired. Please request a new one.', 'error');
+          backToPhone();
+        } else {
+          showToast('Could not verify OTP. Please try again.', 'error');
+        }
       }
     };
+
+    // ── SUBMIT NAME (new users) ─────────────────────────────
+    window.handleSubmitName = async function () {
+      const name = document.getElementById('name-input').value.trim();
+      if (!name) { showToast('Please enter your name', 'error'); return; }
+
+      const btn = document.getElementById('name-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      // User is already signed in via phone OTP — use that UID
+      const user = _fbAuth.currentUser;
+      const uid = user?.uid;
+      const fullPhone = user?.phoneNumber || _pendingPhone;
+      if (!uid) { btn.disabled = false; btn.textContent = 'Continue'; showToast('Session expired. Please start again.', 'error'); backToPhone(); return; }
+
+      try {
+        // Mirror the app's updateDisplayName: set both the Auth profile and Firestore
+        try { await updateProfile(user, { displayName: name }); } catch (e) { console.warn('updateProfile:', e.code); }
+        await updateDoc(doc(_fbDb, 'users', uid), { displayName: name });
+
+        _persistSession(fullPhone, name, uid);
+        showToast('Welcome, ' + name.split(' ')[0] + '!', 'success');
+        setTimeout(() => {
+          location.href = new URLSearchParams(location.search).get('redirect') || 'index.html';
+        }, 1000);
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Continue';
+        showToast('Could not save your name. Please try again.', 'error');
+        console.error('Save profile error:', err.code, err.message);
+      }
+    };
+
+    // allow Enter key on name input
+    document.getElementById('name-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSubmitName();
+    });
 
     // ── BACK TO PHONE ───────────────────────────────────────
     window.backToPhone = function () {
       clearResendTimer();
-      resetRecaptcha(); // destroy verifier — next send flow will create a fresh one
       document.getElementById('otp-input').value = '';
       confirmationResult = null;
       showStep('phone');
@@ -864,19 +966,8 @@
     window.handleResend = async function () {
       const btn = document.getElementById('resend-btn');
       if (btn.disabled) return;
-
-      const raw = document.getElementById('phone-input').value.trim();
-      resetRecaptcha(); // must destroy old verifier before resending
-      initRecaptcha();
-
-      try {
-        confirmationResult = await signInWithPhoneNumber(auth, '+91' + raw, recaptchaVerifier);
-        startResendTimer();
-        showToast('OTP resent!', 'success');
-      } catch (err) {
-        resetRecaptcha();
-        showToast(err.message || 'Could not resend OTP', 'error');
-      }
+      _resetRecaptcha(); // fresh token for the new request
+      handleSendOTP();
     };
 
     function startResendTimer() {
