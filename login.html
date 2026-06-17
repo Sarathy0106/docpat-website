@@ -744,8 +744,8 @@
     }
 
     function _clearSession() {
-      ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan'].forEach(k => localStorage.removeItem(k));
-      ['docpat_phone', 'docpat_name'].forEach(n => {
+      ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan', 'docpat_plan_billing'].forEach(k => localStorage.removeItem(k));
+      ['docpat_phone', 'docpat_name', 'docpat_uid'].forEach(n => {
         document.cookie = n + '=; max-age=0; path=/; SameSite=Lax';
       });
     }
@@ -754,7 +754,10 @@
       const exp = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
       localStorage.setItem('docpat_phone', phone);
       localStorage.setItem('docpat_login_time', new Date().toISOString());
-      if (uid) localStorage.setItem('docpat_uid', uid);
+      if (uid) {
+        localStorage.setItem('docpat_uid', uid);
+        document.cookie = `docpat_uid=${encodeURIComponent(uid)}; expires=${exp}; path=/; SameSite=Lax`;
+      }
       document.cookie = `docpat_phone=${encodeURIComponent(phone)}; expires=${exp}; path=/; SameSite=Lax`;
       if (name) {
         localStorage.setItem('docpat_name', name);

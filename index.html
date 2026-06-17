@@ -1868,7 +1868,6 @@
         <div class="avatar-info">
           <div class="avatar-menu-name" id="avatar-menu-name">—</div>
           <div class="avatar-menu-phone" id="avatar-menu-phone">—</div>
-          <div class="avatar-menu-date" id="avatar-menu-date">—</div>
           <div class="avatar-menu-plan" id="avatar-menu-plan" style="display:none;"></div>
         </div>
         <button class="avatar-logout-btn" onclick="window.handleLogout()">Logout</button>
@@ -3702,14 +3701,22 @@
     // ── PLAN BADGE HELPER ─────────────────────────────────────────────────────
     const PLAN_LABELS = { free: 'Free', basic: 'Basic', pro: 'Pro', clinic: 'Clinic' };
     const PLAN_COLORS = { free: '#64748b', basic: '#0284c7', pro: '#7c3aed', clinic: '#0d9488' };
+    const PLAN_BG_COLORS = { free: 'rgba(100, 116, 139, 0.08)', basic: 'rgba(2, 132, 199, 0.08)', pro: 'rgba(124, 58, 237, 0.08)', clinic: 'rgba(13, 148, 136, 0.08)' };
 
-    function applyPlanBadge(plan) {
+    function applyPlanBadge(plan, billing) {
       const el = document.getElementById('avatar-menu-plan');
       if (!el || !plan) return;
       const label = PLAN_LABELS[plan] || plan;
       const color = PLAN_COLORS[plan] || '#0284c7';
-      el.textContent = '● ' + label + ' Plan';
+      const bg = PLAN_BG_COLORS[plan] || 'rgba(2, 132, 199, 0.08)';
+      let text = '● ' + label + ' Plan';
+      if (plan !== 'free') {
+        const period = (billing || localStorage.getItem('docpat_plan_billing') || 'monthly') === 'yearly' ? 'Yearly' : 'Monthly';
+        text += ` (${period})`;
+      }
+      el.textContent = text;
       el.style.color = color;
+      el.style.backgroundColor = bg;
       el.style.display = '';
     }
 
@@ -3722,7 +3729,7 @@
           const billing = d.plan_billing || 'monthly';
           localStorage.setItem('docpat_plan', plan);
           localStorage.setItem('docpat_plan_billing', billing);
-          applyPlanBadge(plan);
+          applyPlanBadge(plan, billing);
 
           // Automatically set the pricing toggle to match the user's active billing period
           if (plan !== 'free') {
@@ -3731,7 +3738,9 @@
             markSubscribedPlan(plan, billing);
           }
         }
-      } catch (_) { }
+      } catch (err) {
+        console.error('loadUserPlan Firestore read error:', err);
+      }
     }
 
     // Mark the active paid plan's card as "Subscribed" and reset the others
@@ -3789,15 +3798,19 @@
 
       const elName = document.getElementById('avatar-menu-name');
       const elPhone = document.getElementById('avatar-menu-phone');
-      const elDate = document.getElementById('avatar-menu-date');
       if (elName) elName.textContent = name || 'DocPat User';
       if (elPhone) elPhone.textContent = phone || '—';
 
 
       // Show cached plan immediately, then refresh from Firestore
-      const cachedPlan = localStorage.getItem('docpat_plan');
-      const cachedBilling = localStorage.getItem('docpat_plan_billing') || 'monthly';
-      if (cachedPlan) { applyPlanBadge(cachedPlan); markSubscribedPlan(cachedPlan, cachedBilling); }
+      if (cachedPlan) {
+        applyPlanBadge(cachedPlan, cachedBilling);
+        if (cachedPlan !== 'free') {
+          setPricePeriod(cachedBilling);
+        } else {
+          markSubscribedPlan(cachedPlan, cachedBilling);
+        }
+      }
       if (user.uid) loadUserPlan(user.uid);
 
       if (loginBtn) loginBtn.style.display = 'none';
@@ -3829,11 +3842,15 @@
       const cookieName = _getCookie('docpat_name');
       if (cookieName) localStorage.setItem('docpat_name', cookieName);
     }
+    if (!localStorage.getItem('docpat_uid')) {
+      const cookieUid = _getCookie('docpat_uid');
+      if (cookieUid) localStorage.setItem('docpat_uid', cookieUid);
+    }
 
     // Quick local render using localStorage session (set by login.html)
     if (localStorage.getItem('docpat_phone')) {
       applyAuthUI({
-        uid: localStorage.getItem('docpat_phone'),
+        uid: localStorage.getItem('docpat_uid') || localStorage.getItem('docpat_phone'),
         displayName: localStorage.getItem('docpat_name'),
         phoneNumber: localStorage.getItem('docpat_phone')
       });
@@ -3878,17 +3895,7 @@
         });
       });
 
-      // 4. Delete Firebase's IndexedDB stores so the session can't be restored
-      try {
-        if (window.indexedDB && indexedDB.databases) {
-          const dbs = await indexedDB.databases();
-          await Promise.all(dbs
-            .filter(d => d.name && d.name.toLowerCase().includes('firebase'))
-            .map(d => new Promise(res => { const r = indexedDB.deleteDatabase(d.name); r.onsuccess = r.onerror = r.onblocked = () => res(); })));
-        }
-      } catch (e) {}
-
-      // 5. Hard redirect to the login page (replace = no back-button return)
+      // 4. Hard redirect to the login page (replace = no back-button return)
       location.replace('login.html?logout=1');
     };
 
@@ -4078,16 +4085,18 @@
 
     .avatar-menu {
       position: absolute;
-      top: calc(100% + 10px);
+      top: calc(100% + 12px);
       right: 0;
-      min-width: 220px;
-      background: #fff;
-      border: 1px solid rgba(2, 132, 199, 0.18);
-      border-radius: 14px;
-      box-shadow: 0 16px 40px rgba(14, 165, 233, 0.14);
-      padding: 14px;
+      min-width: 240px;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(2, 132, 199, 0.14);
+      border-radius: 16px;
+      box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08), 0 4px 14px rgba(2, 132, 199, 0.04);
+      padding: 20px;
       display: none;
       z-index: 500;
+      text-align: left;
     }
 
     .avatar-menu.open {
@@ -4108,54 +4117,65 @@
     }
 
     .avatar-info {
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(2, 132, 199, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
     }
 
     .avatar-menu-name {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       color: #0f172a;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
     }
 
     .avatar-menu-phone {
-      font-size: 12px;
-      color: #475569;
-      margin-top: 2px;
-    }
-
-    .avatar-menu-date {
-      font-size: 11px;
-      color: #94a3b8;
-      margin-top: 2px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #64748b;
+      margin: 0;
     }
 
     .avatar-menu-plan {
       font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.3px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
       margin-top: 6px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: rgba(2, 132, 199, 0.08);
-      display: inline-block;
     }
 
     .avatar-logout-btn {
       width: 100%;
-      padding: 8px 0;
-      background: none;
-      border: 1.5px solid rgba(2, 132, 199, 0.2);
-      border-radius: 8px;
-      color: #0284c7;
+      padding: 10px 0;
+      background: #0f172a;
+      border: none;
+      border-radius: 10px;
+      color: #ffffff;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: background .18s;
+      transition: background-color 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
     }
 
     .avatar-logout-btn:hover {
-      background: rgba(2, 132, 199, 0.06);
+      background: #1e293b;
+    }
+
+    .avatar-logout-btn:active {
+      transform: scale(0.98);
     }
   </style>
 
