@@ -3871,8 +3871,9 @@
 
     // ── RAZORPAY PAYMENT ──────────────────────────────────────────────────────
     const RZP_KEY = 'rzp_test_T2QM6KGZZxlupC';
-    // TODO: replace with the real Play Store listing URL once the app is published.
-    const PLAY_STORE_URL = 'https://play.google.com/store/search?q=DocPat&c=apps';
+    // NOTE: this currently points to the Google Search app — replace with the real
+    // DocPat Play Store listing URL once the app is published.
+    const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.google.android.googlequicksearchbox';
     const DOCPAT_EMAIL = 'docpat.contact@gmail.com';
 
     window.handlePlanPurchase = async function (plan, billingOverride) {
@@ -3897,8 +3898,17 @@
         return;
       }
 
-      // Basic / Pro → Razorpay checkout. Not logged in → login then return.
-      if (!user) {
+      // Basic / Pro → Razorpay checkout. MUST be logged in, else go to login.
+      // currentUser may still be restoring from storage right after page load,
+      // so wait for the first auth-state result before deciding.
+      let payUser = user;
+      if (!payUser && localStorage.getItem('docpat_phone')) {
+        payUser = await new Promise(resolve => {
+          const unsub = onAuthStateChanged(_fbAuth, u => { unsub(); resolve(u); });
+          setTimeout(() => resolve(_fbAuth.currentUser), 3000);
+        });
+      }
+      if (!payUser) {
         const returnUrl = 'index.html?plan=' + plan + '&billing=' + billing;
         location.href = 'login.html?redirect=' + encodeURIComponent(returnUrl);
         return;
@@ -3916,19 +3926,19 @@
         description: plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan — ' + billing.charAt(0).toUpperCase() + billing.slice(1),
         image: 'assets/logo.svg',
         prefill: {
-          contact: user.phoneNumber || ''
+          contact: payUser.phoneNumber || ''
         },
         notes: {
           plan: plan,
           billing: billing,
-          uid: user.uid
+          uid: payUser.uid
         },
         theme: { color: '#0284c7' },
         handler: async function (response) {
-          await _savePlanToFirestore(user.uid, plan, billing, amount, response.razorpay_payment_id);
+          await _savePlanToFirestore(payUser.uid, plan, billing, amount, response.razorpay_payment_id);
           _showPayToast('Payment successful! ' + PLAN_LABELS[plan] + ' plan activated.', true);
           markSubscribedPlan(plan);
-          loadUserPlan(user.uid);
+          loadUserPlan(payUser.uid);
         },
         modal: {
           ondismiss: function () {
