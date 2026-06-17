@@ -3786,6 +3786,7 @@
         if (loginBtn) loginBtn.style.display = '';
         if (avatarWrap) avatarWrap.style.display = 'none';
         ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan', 'docpat_plan_billing'].forEach(k => localStorage.removeItem(k));
+        markSubscribedPlan('free', 'monthly');
         return;
       }
 
@@ -3801,6 +3802,8 @@
       if (elName) elName.textContent = name || 'DocPat User';
       if (elPhone) elPhone.textContent = phone || '—';
 
+      const cachedPlan = localStorage.getItem('docpat_plan');
+      const cachedBilling = localStorage.getItem('docpat_plan_billing') || 'monthly';
 
       // Show cached plan immediately, then refresh from Firestore
       if (cachedPlan) {
