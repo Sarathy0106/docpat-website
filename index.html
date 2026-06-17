@@ -1870,7 +1870,7 @@
           <div class="avatar-menu-phone" id="avatar-menu-phone">—</div>
           <div class="avatar-menu-plan" id="avatar-menu-plan" style="display:none;"></div>
         </div>
-        <button type="button" class="avatar-logout-btn" onclick="try{['docpat_uid','docpat_name','docpat_phone','docpat_login_time','docpat_plan','docpat_plan_billing'].forEach(function(k){localStorage.removeItem(k)});sessionStorage.clear()}catch(e){};try{['docpat_phone','docpat_name','docpat_uid'].forEach(function(n){['/','',location.pathname].forEach(function(p){document.cookie=n+'=; max-age=0; path='+p;document.cookie=n+'=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path='+p})})}catch(e){};window.location.replace('login.html?logout=1')">Logout</button>
+        <button type="button" class="avatar-logout-btn" onclick="try{localStorage.clear();sessionStorage.clear()}catch(e){};window.location.replace('login.html?logout=1')">Logout</button>
       </div>
     </div>
   </nav>
@@ -3829,26 +3829,9 @@
       }
     }
 
-    // Restore session from 30-day cookie if localStorage was cleared
-    function _getCookie(name) {
-      const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='));
-      return match ? decodeURIComponent(match.split('=')[1]) : null;
-    }
-    if (!localStorage.getItem('docpat_phone')) {
-      const cookiePhone = _getCookie('docpat_phone');
-      if (cookiePhone) {
-        localStorage.setItem('docpat_phone', cookiePhone);
-        localStorage.setItem('docpat_login_time', new Date().toISOString());
-      }
-    }
-    if (!localStorage.getItem('docpat_name')) {
-      const cookieName = _getCookie('docpat_name');
-      if (cookieName) localStorage.setItem('docpat_name', cookieName);
-    }
-    if (!localStorage.getItem('docpat_uid')) {
-      const cookieUid = _getCookie('docpat_uid');
-      if (cookieUid) localStorage.setItem('docpat_uid', cookieUid);
-    }
+    // Session source of truth = Firebase Auth + localStorage (NOT cookies).
+    // Cookies are intentionally not read here, so logout (which clears
+    // localStorage + signs out Firebase) is never revived by a stale cookie.
 
     // Quick local render using localStorage session (set by login.html)
     if (localStorage.getItem('docpat_phone')) {
@@ -3859,10 +3842,12 @@
       });
     }
 
-    // If Firebase Auth also has a real session, let it override.
-    // If Firebase returns null but we have a local session, keep the avatar.
+    // The local session (localStorage) is the source of truth for the UI.
+    // Only show the logged-in avatar when BOTH Firebase AND localStorage agree —
+    // so after logout (localStorage cleared) a lingering Firebase session can
+    // never revive the avatar.
     onAuthStateChanged(_fbAuth, firebaseUser => {
-      if (firebaseUser) {
+      if (firebaseUser && localStorage.getItem('docpat_phone')) {
         applyAuthUI(firebaseUser);
       } else if (!localStorage.getItem('docpat_phone')) {
         applyAuthUI(null);

@@ -744,25 +744,16 @@
     }
 
     function _clearSession() {
+      // Cookies are intentionally left untouched — session lives in localStorage + Firebase
       ['docpat_uid', 'docpat_name', 'docpat_phone', 'docpat_login_time', 'docpat_plan', 'docpat_plan_billing'].forEach(k => localStorage.removeItem(k));
-      ['docpat_phone', 'docpat_name', 'docpat_uid'].forEach(n => {
-        document.cookie = n + '=; max-age=0; path=/; SameSite=Lax';
-      });
     }
 
     function _persistSession(phone, name, uid) {
-      const exp = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+      // Session is kept in localStorage (+ Firebase Auth persistence). No cookies.
       localStorage.setItem('docpat_phone', phone);
       localStorage.setItem('docpat_login_time', new Date().toISOString());
-      if (uid) {
-        localStorage.setItem('docpat_uid', uid);
-        document.cookie = `docpat_uid=${encodeURIComponent(uid)}; expires=${exp}; path=/; SameSite=Lax`;
-      }
-      document.cookie = `docpat_phone=${encodeURIComponent(phone)}; expires=${exp}; path=/; SameSite=Lax`;
-      if (name) {
-        localStorage.setItem('docpat_name', name);
-        document.cookie = `docpat_name=${encodeURIComponent(name)}; expires=${exp}; path=/; SameSite=Lax`;
-      }
+      if (uid) localStorage.setItem('docpat_uid', uid);
+      if (name) localStorage.setItem('docpat_name', name);
     }
 
     // If redirected here from logout, wipe everything and stay on login page
@@ -772,10 +763,9 @@
       signOut(_fbAuth).catch(() => { });
       history.replaceState({}, '', 'login.html');
     } else {
-      // Redirect if already logged in (localStorage or cookie session)
-      const _savedPhone = localStorage.getItem('docpat_phone') || _getCookieVal('docpat_phone');
+      // Redirect if already logged in (localStorage session only — no cookies)
+      const _savedPhone = localStorage.getItem('docpat_phone');
       if (_savedPhone) {
-        if (!localStorage.getItem('docpat_phone')) localStorage.setItem('docpat_phone', _savedPhone);
         const redirect = new URLSearchParams(location.search).get('redirect') || 'index.html';
         location.href = redirect;
       }
