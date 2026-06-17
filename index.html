@@ -1462,6 +1462,31 @@
       background: rgba(255, 255, 255, 0.98);
     }
 
+    /* ── Subscribed (active plan) state ── */
+    .plan-btn.plan-subscribed {
+      background: #dcfce7 !important;
+      color: #15803d !important;
+      border: 1.5px solid #86efac !important;
+      pointer-events: none;
+      cursor: default;
+      box-shadow: none !important;
+    }
+
+    .subscribed-ribbon {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: #15803d;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      padding: 4px 11px;
+      border-radius: 999px;
+      box-shadow: 0 4px 12px rgba(21, 128, 61, 0.28);
+      z-index: 3;
+    }
+
     .popular-badge {
       position: absolute;
       top: -13px;
@@ -2416,7 +2441,7 @@
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg><span>No family / multi-user sharing</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-outline"
+          <a href="javascript:void(0)" id="btn-free" data-label="Start Free" class="plan-btn plan-btn-outline"
             onclick="window.handlePlanPurchase('free',0)">Start Free</a>
         </div>
 
@@ -2456,7 +2481,7 @@
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg><span>No family / multi-user sharing</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-primary"
+          <a href="javascript:void(0)" id="btn-basic" data-label="Get Basic" class="plan-btn plan-btn-primary"
             onclick="window.handlePlanPurchase('basic')">Get Basic</a>
         </div>
 
@@ -2488,7 +2513,7 @@
                 <polyline points="20 6 9 17 4 12" />
               </svg><span>Priority email support</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-outline" onclick="window.handlePlanPurchase('pro')">Get
+          <a href="javascript:void(0)" id="btn-pro" data-label="Get Pro" class="plan-btn plan-btn-outline" onclick="window.handlePlanPurchase('pro')">Get
             Pro</a>
         </div>
 
@@ -2526,7 +2551,7 @@
                 <polyline points="20 6 9 17 4 12" />
               </svg><span>24/7 dedicated support + SLA</span></li>
           </ul>
-          <a href="javascript:void(0)" class="plan-btn plan-btn-outline"
+          <a href="javascript:void(0)" id="btn-clinic" data-label="Get Clinic" class="plan-btn plan-btn-outline"
             onclick="window.handlePlanPurchase('clinic')">Get Clinic</a>
         </div>
 
@@ -3687,9 +3712,38 @@
           const plan = d.plan || 'free';
           localStorage.setItem('docpat_plan', plan);
           applyPlanBadge(plan);
+          markSubscribedPlan(plan);
         }
       } catch (_) { }
     }
+
+    // Mark the active paid plan's card as "Subscribed" and reset the others
+    function markSubscribedPlan(plan) {
+      ['free', 'basic', 'pro', 'clinic'].forEach(p => {
+        const b = document.getElementById('btn-' + p);
+        if (!b) return;
+        b.classList.remove('plan-subscribed');
+        if (b.dataset.label) b.textContent = b.dataset.label;
+        const card = b.closest('.pricing-card');
+        const ribbon = card && card.querySelector('.subscribed-ribbon');
+        if (ribbon) ribbon.remove();
+      });
+
+      // Only paid plans show a subscribed state
+      if (!plan || plan === 'free') return;
+      const btn = document.getElementById('btn-' + plan);
+      if (!btn) return;
+      btn.classList.add('plan-subscribed');
+      btn.textContent = '✓ Subscribed';
+      const card = btn.closest('.pricing-card');
+      if (card && !card.querySelector('.subscribed-ribbon')) {
+        const r = document.createElement('div');
+        r.className = 'subscribed-ribbon';
+        r.textContent = 'Your Plan';
+        card.appendChild(r);
+      }
+    }
+    window.markSubscribedPlan = markSubscribedPlan;
 
     // ── AUTH UI ───────────────────────────────────────────────────────────────
     function applyAuthUI(user) {
@@ -3720,7 +3774,7 @@
 
       // Show cached plan immediately, then refresh from Firestore
       const cachedPlan = localStorage.getItem('docpat_plan');
-      if (cachedPlan) applyPlanBadge(cachedPlan);
+      if (cachedPlan) { applyPlanBadge(cachedPlan); markSubscribedPlan(cachedPlan); }
       if (user.uid) loadUserPlan(user.uid);
 
       if (loginBtn) loginBtn.style.display = 'none';
@@ -3817,20 +3871,33 @@
 
     // ── RAZORPAY PAYMENT ──────────────────────────────────────────────────────
     const RZP_KEY = 'rzp_test_T2QM6KGZZxlupC';
+    // TODO: replace with the real Play Store listing URL once the app is published.
+    const PLAY_STORE_URL = 'https://play.google.com/store/search?q=DocPat&c=apps';
+    const DOCPAT_EMAIL = 'docpat.contact@gmail.com';
 
     window.handlePlanPurchase = async function (plan, billingOverride) {
       const user = _fbAuth.currentUser;
       const billing = billingOverride || pricePeriod;
 
-      // Free plan — just update Firestore, no payment
+      // Free plan → send to the Play Store to download the app
       if (plan === 'free') {
-        if (!user) { location.href = 'login.html'; return; }
-        await _savePlanToFirestore(user.uid, 'free', null, 0, null);
-        _showPayToast('You are on the Free plan.', true);
+        window.open(PLAY_STORE_URL, '_blank');
         return;
       }
 
-      // Not logged in — redirect to login then come back
+      // Clinic plan → email enquiry to the DocPat team (no online checkout)
+      if (plan === 'clinic') {
+        const subject = encodeURIComponent('DocPat Clinic Plan — Enquiry');
+        const body = encodeURIComponent(
+          'Hi DocPat team,\n\nI am interested in the Clinic plan. Please share the details and next steps to get started.\n\n' +
+          (user?.phoneNumber ? 'My number: ' + user.phoneNumber + '\n' : '') +
+          '\nThanks.'
+        );
+        location.href = 'mailto:' + DOCPAT_EMAIL + '?subject=' + subject + '&body=' + body;
+        return;
+      }
+
+      // Basic / Pro → Razorpay checkout. Not logged in → login then return.
       if (!user) {
         const returnUrl = 'index.html?plan=' + plan + '&billing=' + billing;
         location.href = 'login.html?redirect=' + encodeURIComponent(returnUrl);
@@ -3860,6 +3927,7 @@
         handler: async function (response) {
           await _savePlanToFirestore(user.uid, plan, billing, amount, response.razorpay_payment_id);
           _showPayToast('Payment successful! ' + PLAN_LABELS[plan] + ' plan activated.', true);
+          markSubscribedPlan(plan);
           loadUserPlan(user.uid);
         },
         modal: {
