@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinic Portal — DocPat</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sky: #0284c7;
+      --sky2: #075985;
+      --sky3: #0ea5e9;
+      --teal: #0d9488;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: rgba(2, 132, 199, 0.16);
+      --bg: #f0f9ff;
+      --card: #ffffff;
+      --ok: #16a34a;
+      --ok-bg: rgba(22, 163, 74, 0.1);
+      --warn: #d97706;
+      --warn-bg: rgba(217, 119, 6, 0.1);
+      --crit: #dc2626;
+      --crit-bg: rgba(220, 38, 38, 0.1);
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── Gate screens ── */
+    .gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .gate-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(14, 165, 233, 0.12);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+    .gate-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px; font-size: 24px;
+      background: rgba(13, 148, 136, 0.1);
+    }
+    .gate h1 { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+    .gate p.sub { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-bottom: 22px; }
+    .gate input[type="text"] {
+      width: 100%; padding: 12px 14px; border-radius: 10px;
+      border: 1.5px solid var(--border); font-size: 15px;
+      margin-bottom: 12px; outline: none; transition: border-color .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .gate input[type="text"]:focus { border-color: var(--teal); }
+    .gate .err { color: var(--crit); font-size: 12.5px; font-weight: 600; margin-bottom: 12px; min-height: 16px; }
+    .gate-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--teal), #0f766e);
+      color: #fff; border: none; padding: 12px; border-radius: 10px;
+      font-weight: 700; font-size: 14px; cursor: pointer;
+      box-shadow: 0 8px 26px rgba(13, 148, 136, 0.28);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .gate-btn:hover { transform: translateY(-1px); }
+    .gate-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .gate-link { display: inline-block; margin-top: 18px; color: var(--sky); font-size: 13px; font-weight: 600; text-decoration: none; }
+    .gate-link:hover { text-decoration: underline; }
+
+    /* ── Dashboard shell ── */
+    #dashboard { display: none; min-height: 100vh; }
+    .sidebar {
+      width: 232px; flex-shrink: 0; background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; bottom: 0; left: 0;
+    }
+    .sidebar-head { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); }
+    .sidebar-head .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .sidebar-head .brand img { width: 26px; height: 26px; }
+    .sidebar-head .brand span { font-weight: 800; font-size: 15px; }
+    .sidebar-head .role-tag { font-size: 11px; color: var(--teal); font-weight: 700; letter-spacing: .04em; }
+    .sidebar-head .clinic-name { font-size: 12.5px; color: var(--muted); margin-top: 8px; font-weight: 600; }
+    .nav { flex: 1; padding: 14px 12px; display: flex; flex-direction: column; gap: 3px; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 9px;
+      color: var(--muted); font-weight: 600; font-size: 13.5px;
+      background: none; border: none; cursor: pointer; text-align: left; width: 100%;
+      transition: background .15s, color .15s;
+    }
+    .nav-btn:hover { background: rgba(13, 148, 136, 0.06); color: var(--text); }
+    .nav-btn.active { background: rgba(13, 148, 136, 0.1); color: #0f766e; }
+    .sidebar-foot { padding: 14px 20px 20px; border-top: 1px solid var(--border); }
+    .sidebar-foot .who { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; word-break: break-all; }
+    .sidebar-foot button {
+      width: 100%; font-size: 12px; font-weight: 700; padding: 8px;
+      border-radius: 8px; cursor: pointer; border: 1px solid var(--border);
+      background: #fff; color: var(--muted);
+    }
+    .sidebar-foot button:hover { border-color: var(--crit); color: var(--crit); }
+
+    .main { margin-left: 232px; padding: 32px 36px 60px; max-width: 900px; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .view-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .view-head h2 { font-size: 21px; font-weight: 800; }
+    .view-sub { color: var(--muted); font-size: 13.5px; margin-bottom: 22px; max-width: 60ch; line-height: 1.5; }
+
+    .panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 2px 16px rgba(14, 165, 233, 0.06);
+      padding: 20px 22px; margin-bottom: 16px;
+    }
+    .panel-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 14px; }
+
+    label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .field { margin-bottom: 14px; }
+    input[type="text"], input[type="date"], select, textarea {
+      width: 100%; padding: 10px 12px; border-radius: 9px;
+      border: 1.5px solid var(--border); font-size: 13.5px;
+      font-family: 'Inter', sans-serif; outline: none;
+      transition: border-color .2s; background: #fff; color: var(--text);
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--teal); }
+    textarea { resize: vertical; min-height: 64px; }
+
+    .btn {
+      background: linear-gradient(135deg, var(--teal), #0f766e);
+      color: #fff; border: none; padding: 11px 22px; border-radius: 9px;
+      font-weight: 700; font-size: 13.5px; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(13, 148, 136, 0.25);
+      transition: transform .15s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      background: #fff; color: var(--muted);
+      border: 1px solid var(--border); box-shadow: none;
+      padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12.5px; cursor: pointer;
+    }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+    .btn-ghost.danger:hover { border-color: var(--crit); color: var(--crit); }
+
+    .row-list { display: flex; flex-direction: column; }
+    .p-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 4px; border-bottom: 1px solid var(--border); font-size: 13.5px;
+    }
+    .p-row:last-child { border-bottom: none; }
+    .p-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(13, 148, 136, 0.1); color: var(--teal);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; flex-shrink: 0;
+    }
+    .p-name { font-weight: 700; }
+    .p-meta { font-size: 11.5px; color: var(--muted); font-family: var(--mono); }
+    .pill { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .pill.ok { background: var(--ok-bg); color: var(--ok); }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .pill.crit { background: var(--crit-bg); color: var(--crit); }
+    .pill.sky { background: rgba(2,132,199,.1); color: var(--sky2); }
+
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 28px; text-align: center; color: var(--muted);
+      cursor: pointer; transition: border-color .2s, background .2s;
+      margin-bottom: 14px; font-size: 13.5px;
+    }
+    .drop-zone:hover, .drop-zone.drag { border-color: var(--teal); background: rgba(13, 148, 136, 0.04); }
+    .drop-zone .picked { color: var(--text); font-weight: 700; }
+
+    #qr-box { display: flex; justify-content: center; padding: 18px 0 8px; }
+    #qr-box img, #qr-box canvas { border: 8px solid #fff; border-radius: 10px; box-shadow: 0 4px 24px rgba(14,165,233,.15); }
+    .join-code-text {
+      text-align: center; font-family: var(--mono); font-size: 12px;
+      color: var(--muted); margin-top: 10px; word-break: break-all;
+    }
+
+    .status-line { margin-top: 12px; font-size: 13px; font-weight: 600; min-height: 18px; }
+    .status-line.ok { color: var(--ok); }
+    .status-line.err { color: var(--crit); }
+    .status-line.busy { color: var(--sky2); }
+
+    .empty-state { text-align: center; color: var(--muted); padding: 28px 0; font-size: 13.5px; }
+    .note {
+      background: var(--warn-bg); border: 1px solid rgba(217, 119, 6, 0.3);
+      border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #92400e;
+      line-height: 1.5; margin-bottom: 16px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══ GATE: loading ═══ -->
+  <div id="gate-loading" class="gate">
+    <div class="gate-card">
+      <div class="gate-icon">⏳</div>
+      <h1>Loading…</h1>
+      <p class="sub">Checking your clinic account.</p>
+    </div>
+  </div>
+
+  <!-- ═══ GATE: signed out ═══ -->
+  <div id="gate-signedout" class="gate" style="display:none">
+    <div class="gate-card">
+      <div class="gate-icon">🔒</div>
+      <h1>Sign in required</h1>
+      <p class="sub">Sign in with your DocPat account to open the Clinic Portal.</p>
+      <a class="gate-link" href="login.html?redirect=clinic.html">Go to sign in →</a>
+    </div>
+  </div>
+
+  <!-- ═══ GATE: no clinic yet — create one ═══ -->
+  <div id="gate-create" class="gate" style="display:none">
+    <div class="gate-card">
+      <div class="gate-icon">🏥</div>
+      <h1>Set up your clinic or family space</h1>
+      <p class="sub">Upload documents directly into your patients' or family members' DocPat vaults. A <b>Clinic plan</b> creates a clinic (5 staff seats); a <b>Pro plan</b> creates a family group.</p>
+      <input id="create-name" type="text" placeholder="Name (e.g. Sunrise Diagnostics / Kumar Family)" maxlength="80" />
+      <div class="err" id="create-err"></div>
+      <button class="gate-btn" id="create-btn" onclick="handleCreateClinic()">Create clinic</button>
+      <p class="sub" style="margin-top:18px;margin-bottom:0">
+        Joining an existing clinic instead? Give this ID to your clinic owner:<br>
+        <span id="my-uid" style="font-family:var(--mono);font-size:12px;user-select:all"></span>
+      </p>
+      <a class="gate-link" href="index.html">← Back to DocPat</a>
+    </div>
+  </div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div id="dashboard">
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <div class="brand"><img src="assets/logo.svg" alt="" /><span>DocPat</span></div>
+        <div class="role-tag">CLINIC PORTAL</div>
+        <div class="clinic-name" id="side-clinic-name">—</div>
+        <div id="side-meter" style="margin-top:12px;display:none">
+          <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:4px">
+            <span>Pushed storage</span><span id="side-meter-label">—</span>
+          </div>
+          <div style="height:6px;border-radius:4px;background:var(--bg);overflow:hidden">
+            <div id="side-meter-fill" style="height:100%;border-radius:4px;background:var(--teal);width:0%;transition:width .4s"></div>
+          </div>
+          <a id="side-meter-buy" href="addon.html" target="_blank"
+             style="display:none;font-size:10.5px;color:var(--crit);font-weight:700;text-decoration:none;margin-top:5px">
+            Storage almost full — buy more →
+          </a>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="upload" onclick="showView('upload')">📤&nbsp; Upload for patient</button>
+        <button class="nav-btn" data-view="patients" onclick="showView('patients')">🧑‍🤝‍🧑&nbsp; Linked patients</button>
+        <button class="nav-btn" data-view="link" onclick="showView('link')">🔗&nbsp; Link a patient</button>
+        <button class="nav-btn" data-view="staff" onclick="showView('staff')">👥&nbsp; Staff</button>
+        <button class="nav-btn" data-view="audit" onclick="showView('audit')">📋&nbsp; Upload log</button>
+        <button class="nav-btn" data-view="settings" onclick="showView('settings')">⚙️&nbsp; Settings</button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="who" id="who-label">—</div>
+        <button onclick="handleSignOut()">Sign out</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- Upload -->
+      <div class="view active" id="view-upload">
+        <div class="view-head"><h2>Upload for a patient</h2></div>
+        <p class="view-sub">The file is encrypted in this browser before it leaves — DocPat's servers and IPFS only ever see ciphertext. It appears in the patient's app automatically.</p>
+        <div class="panel">
+          <div class="field">
+            <label for="up-patient">Patient</label>
+            <select id="up-patient"><option value="">Loading…</option></select>
+          </div>
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('up-file').click()">
+            <span id="drop-label">Click to choose a PDF or image (JPG/PNG)</span>
+          </div>
+          <input id="up-file" type="file" accept=".pdf,image/jpeg,image/png" style="display:none" onchange="onFilePicked(this.files[0])" />
+          <div class="field">
+            <label for="up-type">Document type</label>
+            <select id="up-type">
+              <option>Lab Report</option>
+              <option>Prescription</option>
+              <option>Scan / Imaging</option>
+              <option>Discharge Summary</option>
+              <option>Invoice / Bill</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="up-doctor">Doctor name</label>
+            <input id="up-doctor" type="text" placeholder="Dr. …" maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="up-date">Document date</label>
+            <input id="up-date" type="date" />
+          </div>
+          <div class="field">
+            <label for="up-notes">Notes (optional)</label>
+            <textarea id="up-notes" maxlength="500" placeholder="Visible only to the patient"></textarea>
+          </div>
+          <button class="btn" id="up-btn" onclick="handleUpload()">Encrypt &amp; send to patient</button>
+          <div class="status-line" id="up-status"></div>
+        </div>
+      </div>
+
+      <!-- Patients -->
+      <div class="view" id="view-patients">
+        <div class="view-head">
+          <h2>Linked patients</h2>
+          <button class="btn-ghost" onclick="loadPatients()">↻ Refresh</button>
+        </div>
+        <p class="view-sub">Patients who scanned your clinic code. A patient can revoke your access at any time from their app.</p>
+        <div class="panel">
+          <div class="field" style="margin-bottom:16px">
+            <input id="patient-search" type="text"
+              placeholder="Search by DocPat No (e.g. 483920) or name…"
+              oninput="renderPatients(this.value)" />
+          </div>
+          <div class="row-list" id="patients-list"><div class="empty-state">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- Link a patient -->
+      <div class="view" id="view-link">
+        <div class="view-head"><h2>Link a patient</h2></div>
+        <p class="view-sub">Ask the patient to open DocPat → Settings → Security &amp; Privacy → <b>Linked Clinics</b> → "Scan clinic code", and point their camera here. They appear in your roster the moment they scan.</p>
+        <div class="panel">
+          <div id="qr-box"></div>
+          <div class="join-code-text" id="join-code-text"></div>
+        </div>
+      </div>
+
+      <!-- Staff -->
+      <div class="view" id="view-staff">
+        <div class="view-head">
+          <h2>Staff</h2>
+          <button class="btn-ghost" onclick="loadStaff()">↻ Refresh</button>
+        </div>
+        <p class="view-sub">Up to 5 team members can upload for patients (Clinic plan). Only the clinic owner can add or remove seats.</p>
+        <div class="panel">
+          <div class="row-list" id="staff-list"><div class="empty-state">Loading…</div></div>
+        </div>
+        <div class="panel" id="add-staff-panel" style="display:none">
+          <div class="panel-title">Add a staff member</div>
+          <div class="field">
+            <label for="staff-uid">Staff member's DocPat No (or user ID)</label>
+            <input id="staff-uid" type="text" placeholder="6-digit DocPat No — shown in their app and portal footer" />
+          </div>
+          <div class="field">
+            <label for="staff-name">Display name</label>
+            <input id="staff-name" type="text" placeholder="e.g. Reception desk" maxlength="60" />
+          </div>
+          <button class="btn" onclick="handleAddStaff()">Add seat</button>
+          <div class="status-line" id="staff-status"></div>
+        </div>
+      </div>
+
+      <!-- Audit -->
+      <div class="view" id="view-audit">
+        <div class="view-head">
+          <h2>Upload log</h2>
+          <button class="btn-ghost" onclick="loadAudit()">↻ Refresh</button>
+        </div>
+        <p class="view-sub">Every push-upload, by staff member — the audit trail behind your admin dashboard.</p>
+        <div class="panel"><div class="row-list" id="audit-list"><div class="empty-state">Loading…</div></div></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="view" id="view-settings">
+        <div class="view-head"><h2>Settings</h2></div>
+        <div class="note" id="ipfs-note" style="display:none">
+          <b>IPFS storage isn't configured yet.</b> Uploads need a Pinata account (free tier works).
+          Create an API key at app.pinata.cloud → API Keys, and paste the <b>JWT</b> below. Only clinic staff can read it.
+        </div>
+        <div class="panel">
+          <div class="panel-title">IPFS (Pinata) credentials</div>
+          <div class="field">
+            <label for="set-jwt">Pinata JWT</label>
+            <input id="set-jwt" type="text" placeholder="eyJhbGciOi…" autocomplete="off" />
+          </div>
+          <button class="btn" onclick="handleSaveSettings()">Save</button>
+          <div class="status-line" id="set-status"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc, addDoc,
+      collection, query, orderBy, limit, getDocs, deleteDoc,
+      serverTimestamp, Timestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const _fbApp = initializeApp({
+      apiKey: 'AIzaSyCuPNdqQHMHRmNCzZPYLLMTfC101AqXveY',
+      authDomain: 'docpat-84bd9.firebaseapp.com',
+      projectId: 'docpat-84bd9',
+      storageBucket: 'docpat-84bd9.firebasestorage.app',
+      messagingSenderId: '638379411939',
+      appId: '1:638379411939:web:4c37de2a1785f1291fb8d6'
+    }, 'clinic-portal');
+    const _auth = getAuth(_fbApp);
+    const _db = getFirestore(_fbApp);
+
+    let uid = null;
+    let clinicId = null;
+    let clinicData = null;
+    let isOwner = false;
+    let myDocpatNo = null;
+    let patients = [];        // [{uid, name, docpatNo, sharedKeyB64}]
+    let pickedFile = null;
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function showGate(id) {
+      ['gate-loading', 'gate-signedout', 'gate-create'].forEach(g =>
+        document.getElementById(g).style.display = g === id ? 'flex' : 'none');
+      document.getElementById('dashboard').style.display = id === null ? 'flex' : 'none';
+    }
+    const $ = id => document.getElementById(id);
+    function fmt(ts) {
+      if (!ts) return '—';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString();
+    }
+    function setStatus(id, msg, cls) {
+      const el = $(id);
+      el.textContent = msg;
+      el.className = 'status-line' + (cls ? ' ' + cls : '');
+    }
+
+    // ── crypto: mirrors the app's EncryptionService (AES-256-GCM) ────────────
+    // EncryptedPayload JSON: {cipherText, iv, authTag} — all base64.
+    // IPFS byte layout: iv(12) | authTag(16) | cipherText(N).
+    function b64encode(bytes) {
+      let s = '';
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        s += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+      }
+      return btoa(s);
+    }
+    function b64decode(b64) { return Uint8Array.from(atob(b64), c => c.charCodeAt(0)); }
+
+    async function aesEncrypt(plainBytes, keyBytes) {
+      const key = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['encrypt']);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ctAndTag = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plainBytes));
+      // WebCrypto appends the 16-byte GCM tag to the ciphertext; the app stores them separately.
+      const ct = ctAndTag.subarray(0, ctAndTag.length - 16);
+      const tag = ctAndTag.subarray(ctAndTag.length - 16);
+      return { cipherText: b64encode(ct), iv: b64encode(iv), authTag: b64encode(tag) };
+    }
+    async function aesEncryptString(str, keyBytes) {
+      if (!str) return null;
+      return JSON.stringify(await aesEncrypt(new TextEncoder().encode(str), keyBytes));
+    }
+    function payloadToIpfsBytes(p) {
+      const iv = b64decode(p.iv), tag = b64decode(p.authTag), ct = b64decode(p.cipherText);
+      const out = new Uint8Array(iv.length + tag.length + ct.length);
+      out.set(iv, 0); out.set(tag, 12); out.set(ct, 28);
+      return out;
+    }
+    async function sha256Hex(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── auth + clinic bootstrap ──────────────────────────────────────────────
+    onAuthStateChanged(_auth, async (user) => {
+      if (!user) { showGate('gate-signedout'); return; }
+      uid = user.uid;
+      $('who-label').textContent = 'You: ' + uid;
+      $('my-uid').textContent = uid;
+
+      try {
+        const userSnap = await getDoc(doc(_db, 'users', uid));
+        const uData = userSnap.exists() ? userSnap.data() : {};
+        clinicId = uData.clinicId || null;
+        myDocpatNo = uData.docpatNo || null;
+        if (myDocpatNo) {
+          $('who-label').textContent = 'You: #' + myDocpatNo;
+          $('my-uid').textContent = '#' + myDocpatNo + '  (or user ID: ' + uid + ')';
+        }
+      } catch (e) { console.error('user read failed:', e); }
+
+      if (!clinicId) { showGate('gate-create'); return; }
+
+      try {
+        const clinicSnap = await getDoc(doc(_db, 'clinics', clinicId));
+        if (!clinicSnap.exists()) { showGate('gate-create'); return; }
+        clinicData = clinicSnap.data();
+      } catch (e) {
+        // Not staff (removed seat?) — treat as no clinic.
+        console.error('clinic read failed:', e);
+        showGate('gate-create');
+        return;
+      }
+
+      isOwner = clinicData.ownerUid === uid;
+      $('side-clinic-name').textContent = clinicData.name || 'Clinic';
+      if (isOwner) $('add-staff-panel').style.display = '';
+      enterDashboard();
+    });
+
+    window.handleCreateClinic = async function () {
+      const name = $('create-name').value.trim();
+      const err = $('create-err');
+      err.textContent = '';
+      if (name.length < 3) { err.textContent = 'Enter your clinic\'s name (3+ characters).'; return; }
+      const btn = $('create-btn');
+      btn.disabled = true; btn.textContent = 'Creating…';
+      try {
+        // Plan gate: Clinic plan → clinic space; Pro plan → family group
+        // (this is the Pro card's "family / multi-user sharing"); Free/Basic
+        // must upgrade first. Expired plans count as free.
+        let plan = 'free';
+        try {
+          const uSnap = await getDoc(doc(_db, 'users', uid));
+          const d = uSnap.exists() ? uSnap.data() : {};
+          plan = (d.plan || 'free').toLowerCase();
+          const exp = d.plan_expires_at && d.plan_expires_at.toDate ? d.plan_expires_at.toDate() : null;
+          if (plan !== 'free' && exp && Date.now() > exp.getTime()) plan = 'free';
+        } catch (_) {}
+        if (plan !== 'pro' && plan !== 'clinic') {
+          err.textContent = 'Creating a clinic or family space needs a Pro (family sharing) or Clinic plan.';
+          btn.disabled = false; btn.textContent = 'Create clinic';
+          return;
+        }
+
+        const clinicRef = doc(collection(_db, 'clinics'));
+        await setDoc(clinicRef, {
+          name, ownerUid: uid, createdAt: serverTimestamp(),
+          spaceType: plan === 'clinic' ? 'clinic' : 'family',
+        });
+        await setDoc(doc(_db, 'clinics', clinicRef.id, 'staff', uid), {
+          role: 'owner', displayName: 'Owner', addedAt: serverTimestamp(),
+        });
+        await setDoc(doc(_db, 'users', uid), { clinicId: clinicRef.id }, { merge: true });
+        location.reload();
+      } catch (e) {
+        console.error(e);
+        err.textContent = 'Could not create the clinic — please try again.';
+        btn.disabled = false; btn.textContent = 'Create clinic';
+      }
+    };
+
+    let clinicPushedBytes = 0;
+    let clinicCapBytes = 10 * 1024 * 1024 * 1024; // Clinic plan: 10 GB shared
+
+    function enterDashboard() {
+      showGate(null);
+      renderJoinCode();
+      loadPatients();
+      loadStaff();
+      loadAudit();
+      loadSettings();
+      loadClinicMeter();
+      $('up-date').valueAsDate = new Date();
+    }
+
+    // Aggregate of everything this clinic has pushed, against the Clinic
+    // plan's 10 GB shared cap (+ any add-on the owner bought on addon.html).
+    async function loadClinicMeter() {
+      try {
+        if (isOwner) {
+          // Owner can read their own user doc for purchased add-on storage.
+          try {
+            const uSnap = await getDoc(doc(_db, 'users', uid));
+            clinicCapBytes = 10 * 1024 * 1024 * 1024 +
+              ((uSnap.exists() && uSnap.data().extraStorageBytes) || 0);
+          } catch (_) {}
+        }
+        const snap = await getDocs(query(
+          collection(_db, 'clinics', clinicId, 'upload_audit'), limit(1000)));
+        clinicPushedBytes = snap.docs.reduce((sum, d) => sum + (d.data().fileSize || 0), 0);
+
+        const pct = Math.min(100, Math.round((clinicPushedBytes / clinicCapBytes) * 100));
+        const gb = v => (v / (1024 * 1024 * 1024)).toFixed(1).replace(/\.0$/, '');
+        $('side-meter-label').textContent = gb(clinicPushedBytes) + ' / ' + gb(clinicCapBytes) + ' GB';
+        const fill = $('side-meter-fill');
+        fill.style.width = pct + '%';
+        fill.style.background = pct >= 90 ? 'var(--crit)' : 'var(--teal)';
+        $('side-meter-buy').style.display = (pct >= 90 && isOwner) ? 'block' : 'none';
+        $('side-meter').style.display = '';
+      } catch (e) { console.error('meter load failed:', e); }
+    }
+
+    // ── views ────────────────────────────────────────────────────────────────
+    window.showView = function (name) {
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    };
+
+    // ── join code (what the patient's app scans) ─────────────────────────────
+    function renderJoinCode() {
+      const payload = clinicId + '|' + (clinicData.name || 'Clinic');
+      $('qr-box').innerHTML = '';
+      new QRCode($('qr-box'), { text: payload, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+      $('join-code-text').textContent = payload;
+    }
+
+    // ── patients ─────────────────────────────────────────────────────────────
+    window.loadPatients = async function () {
+      const listEl = $('patients-list');
+      const selEl = $('up-patient');
+      try {
+        const snap = await getDocs(collection(_db, 'clinics', clinicId, 'patients'));
+        patients = snap.docs.map(d => ({
+          uid: d.id,
+          name: d.data().patientDisplayName || 'Patient',
+          docpatNo: d.data().docpatNo || null,
+          sharedKeyB64: d.data().sharedKey || null,
+          linkedAt: d.data().linkedAt || null,
+        }));
+        if (!patients.length) {
+          listEl.innerHTML = '<div class="empty-state">No linked patients yet — use "Link a patient".</div>';
+          selEl.innerHTML = '<option value="">No linked patients yet</option>';
+          return;
+        }
+        renderPatients($('patient-search').value || '');
+        // The upload selector shows the DocPat No so staff always pick the
+        // right person, even with two patients sharing a name.
+        selEl.innerHTML = '<option value="">Select a patient…</option>' +
+          patients.filter(p => p.sharedKeyB64)
+            .map(p => `<option value="${p.uid}">${p.name}${p.docpatNo ? ' · #' + p.docpatNo : ' (' + p.uid.slice(0, 8) + '…)'}</option>`).join('');
+      } catch (e) {
+        console.error(e);
+        listEl.innerHTML = '<div class="empty-state">Could not load patients.</div>';
+      }
+    };
+
+    // Filter the roster by DocPat No or name — digits match the number,
+    // anything else matches the name.
+    window.renderPatients = function (filter) {
+      const listEl = $('patients-list');
+      const q = (filter || '').trim().toLowerCase().replace(/^#/, '');
+      const isNumeric = /^\d+$/.test(q);
+      const shown = !q ? patients : patients.filter(p =>
+        isNumeric
+          ? (p.docpatNo || '').startsWith(q)
+          : p.name.toLowerCase().includes(q));
+      if (!shown.length) {
+        listEl.innerHTML = '<div class="empty-state">No patient matches "' + filter + '".</div>';
+        return;
+      }
+      listEl.innerHTML = shown.map(p => `
+        <div class="p-row">
+          <div class="p-avatar">${(p.name || '?')[0].toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div class="p-name">${p.name}${p.docpatNo ? ' <span style="color:var(--teal);font-weight:800">#' + p.docpatNo + '</span>' : ''}</div>
+            <div class="p-meta">${p.docpatNo ? '' : p.uid + ' · '}linked ${fmt(p.linkedAt)}</div>
+          </div>
+          <span class="pill ${p.sharedKeyB64 ? 'ok' : 'crit'}">${p.sharedKeyB64 ? 'READY' : 'KEY MISSING'}</span>
+        </div>`).join('');
+    };
+
+    // ── staff ────────────────────────────────────────────────────────────────
+    window.loadStaff = async function () {
+      const el = $('staff-list');
+      try {
+        const snap = await getDocs(collection(_db, 'clinics', clinicId, 'staff'));
+        el.innerHTML = snap.docs.map(d => {
+          const s = d.data();
+          return `<div class="p-row">
+            <div class="p-avatar">${(s.displayName || '?')[0].toUpperCase()}</div>
+            <div style="flex:1;min-width:0">
+              <div class="p-name">${s.displayName || 'Staff'}</div>
+              <div class="p-meta">${d.id}</div>
+            </div>
+            <span class="pill ${s.role === 'owner' ? 'sky' : 'ok'}">${(s.role || 'staff').toUpperCase()}</span>
+            ${isOwner && s.role !== 'owner'
+              ? `<button class="btn-ghost danger" onclick="removeStaff('${d.id}')">Remove</button>` : ''}
+          </div>`;
+        }).join('');
+      } catch (e) {
+        console.error(e);
+        el.innerHTML = '<div class="empty-state">Could not load staff.</div>';
+      }
+    };
+
+    window.handleAddStaff = async function () {
+      let staffUid = $('staff-uid').value.trim().replace(/^#/, '');
+      const name = $('staff-name').value.trim() || 'Staff';
+      if (!staffUid) { setStatus('staff-status', 'Enter the staff member\'s DocPat No.', 'err'); return; }
+      try {
+        // A 6-digit input is a DocPat No — resolve it to the account ID.
+        if (/^\d{6}$/.test(staffUid)) {
+          const numSnap = await getDoc(doc(_db, 'docpat_numbers', staffUid));
+          if (!numSnap.exists()) {
+            setStatus('staff-status', 'No account found with DocPat No #' + staffUid + ' — double-check the digits.', 'err');
+            return;
+          }
+          staffUid = numSnap.data().uid;
+        }
+        const existing = await getDocs(collection(_db, 'clinics', clinicId, 'staff'));
+        if (existing.size >= 5) {
+          setStatus('staff-status', 'Seat limit reached — the Clinic plan includes 5 team members.', 'err');
+          return;
+        }
+        await setDoc(doc(_db, 'clinics', clinicId, 'staff', staffUid), {
+          role: 'staff', displayName: name, addedAt: serverTimestamp(),
+        });
+        // Point their portal at this clinic (merge write to their user doc is
+        // owner-side best effort; if rules deny it, they set it on first visit).
+        try { await setDoc(doc(_db, 'users', staffUid), { clinicId }, { merge: true }); } catch (_) {}
+        setStatus('staff-status', 'Seat added.', 'ok');
+        $('staff-uid').value = ''; $('staff-name').value = '';
+        loadStaff();
+      } catch (e) {
+        console.error(e);
+        setStatus('staff-status', 'Could not add — check the user ID.', 'err');
+      }
+    };
+
+    window.removeStaff = async function (staffUid) {
+      try {
+        await deleteDoc(doc(_db, 'clinics', clinicId, 'staff', staffUid));
+        loadStaff();
+      } catch (e) { console.error(e); }
+    };
+
+    // ── audit ────────────────────────────────────────────────────────────────
+    window.loadAudit = async function () {
+      const el = $('audit-list');
+      try {
+        const snap = await getDocs(query(
+          collection(_db, 'clinics', clinicId, 'upload_audit'),
+          orderBy('at', 'desc'), limit(100)));
+        if (snap.empty) { el.innerHTML = '<div class="empty-state">No uploads yet.</div>'; return; }
+        el.innerHTML = snap.docs.map(d => {
+          const a = d.data();
+          return `<div class="p-row">
+            <span class="pill ok">SENT</span>
+            <div style="flex:1;min-width:0">
+              <div class="p-name">${a.fileLabel || a.documentType || 'Document'}</div>
+              <div class="p-meta">to ${a.patientName || a.patientUid}${a.patientDocpatNo ? ' #' + a.patientDocpatNo : ''} · by ${a.staffName || a.staffUid}</div>
+            </div>
+            <span class="p-meta">${fmt(a.at)}</span>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        console.error(e);
+        el.innerHTML = '<div class="empty-state">Could not load the log.</div>';
+      }
+    };
+
+    // ── settings (Pinata) ────────────────────────────────────────────────────
+    function loadSettings() {
+      $('set-jwt').value = clinicData.pinataJwt || '';
+      $('ipfs-note').style.display = clinicData.pinataJwt ? 'none' : '';
+    }
+    window.handleSaveSettings = async function () {
+      try {
+        const jwt = $('set-jwt').value.trim();
+        await updateDoc(doc(_db, 'clinics', clinicId), { pinataJwt: jwt });
+        clinicData.pinataJwt = jwt;
+        $('ipfs-note').style.display = jwt ? 'none' : '';
+        setStatus('set-status', 'Saved.', 'ok');
+      } catch (e) {
+        console.error(e);
+        setStatus('set-status', 'Could not save.', 'err');
+      }
+    };
+
+    // ── upload flow ──────────────────────────────────────────────────────────
+    window.onFilePicked = function (file) {
+      if (!file) return;
+      pickedFile = file;
+      $('drop-label').innerHTML = `<span class="picked">${file.name}</span> · ${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+    };
+    const dz = $('drop-zone');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('drag');
+      if (e.dataTransfer.files.length) onFilePicked(e.dataTransfer.files[0]);
+    });
+
+    async function pinToIpfs(bytes, fileName) {
+      const jwt = clinicData.pinataJwt;
+      if (!jwt) throw new Error('NO_IPFS_CONFIG');
+      const form = new FormData();
+      form.append('file', new Blob([bytes], { type: 'application/octet-stream' }), fileName);
+      const resp = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + jwt },
+        body: form,
+      });
+      if (!resp.ok) throw new Error('IPFS upload failed (' + resp.status + ')');
+      return (await resp.json()).IpfsHash;
+    }
+
+    window.handleUpload = async function () {
+      const patientUid = $('up-patient').value;
+      const patient = patients.find(p => p.uid === patientUid);
+      if (!patient) { setStatus('up-status', 'Select a patient first.', 'err'); return; }
+      if (!pickedFile) { setStatus('up-status', 'Choose a file first.', 'err'); return; }
+      if (!clinicData.pinataJwt) {
+        setStatus('up-status', 'IPFS is not configured — open Settings and paste your Pinata JWT.', 'err');
+        showView('settings');
+        return;
+      }
+      if (clinicPushedBytes + pickedFile.size > clinicCapBytes) {
+        setStatus('up-status',
+          'Your clinic\'s shared storage (10 GB) is full. ' +
+          (isOwner ? 'Buy extra storage from the add-on page (link in the sidebar).' :
+            'Ask the clinic owner to buy extra storage.'), 'err');
+        return;
+      }
+
+      const btn = $('up-btn');
+      btn.disabled = true;
+      try {
+        const sharedKey = b64decode(patient.sharedKeyB64);
+        const fileBytes = new Uint8Array(await pickedFile.arrayBuffer());
+        const fileType = pickedFile.type === 'application/pdf' ? 'pdf' : 'image';
+        const fileName = pickedFile.name;
+
+        setStatus('up-status', 'Encrypting…', 'busy');
+        // Fresh per-document key, exactly like the app's own uploads.
+        const docKey = crypto.getRandomValues(new Uint8Array(32));
+        const filePayload = await aesEncrypt(fileBytes, docKey);
+        const ipfsBytes = payloadToIpfsBytes(filePayload);
+
+        setStatus('up-status', 'Uploading encrypted file to IPFS…', 'busy');
+        const cid = await pinToIpfs(ipfsBytes, patientUid + '-' + Date.now() + '.enc');
+
+        setStatus('up-status', 'Sealing metadata…', 'busy');
+        const docType = $('up-type').value;
+        const doctorName = $('up-doctor').value.trim();
+        const notes = $('up-notes').value.trim();
+        const documentDate = $('up-date').valueAsDate || new Date();
+        const now = new Date();
+
+        // Envelope: docKey wrapped with the patient↔clinic shared key.
+        const wrappedDocKey = JSON.stringify(await aesEncrypt(docKey, sharedKey));
+
+        const record = {
+          fileType,
+          ipfsCid: cid,
+          documentType: docType,
+          documentDate: Timestamp.fromDate(documentDate),
+          metadataHash: await sha256Hex(cid + '|' + docType + '|' + now.toISOString()),
+          createdAt: Timestamp.fromDate(now),
+          isFavorite: false,
+          encryptionVersion: 'v1',
+          encryptedAESKey: wrappedDocKey,
+          fileSize: pickedFile.size,
+          uploadedByClinicId: clinicId,
+          uploadedByClinicName: clinicData.name || 'Clinic',
+          uploadedByStaffUid: uid,
+        };
+        const encName = await aesEncryptString(fileName, docKey);
+        const encDoctor = await aesEncryptString(doctorName, docKey);
+        const encHospital = await aesEncryptString(clinicData.name || '', docKey);
+        const encNotes = await aesEncryptString(notes, docKey);
+        if (encName) record.encryptedFileName = encName;
+        if (encDoctor) record.encryptedDoctorName = encDoctor;
+        if (encHospital) record.encryptedHospitalName = encHospital;
+        if (encNotes) record.encryptedNotes = encNotes;
+
+        setStatus('up-status', 'Delivering to patient\'s vault…', 'busy');
+        await addDoc(collection(_db, 'users', patientUid, 'documents'), record);
+
+        // Audit trail (admin dashboard reads this).
+        try {
+          await addDoc(collection(_db, 'clinics', clinicId, 'upload_audit'), {
+            staffUid: uid,
+            staffName: (clinicData.ownerUid === uid ? 'Owner' : 'Staff'),
+            patientUid,
+            patientName: patient.name,
+            patientDocpatNo: patient.docpatNo || null,
+            documentType: docType,
+            fileLabel: fileName,
+            fileSize: pickedFile.size,
+            ipfsCid: cid,
+            at: serverTimestamp(),
+          });
+        } catch (auditErr) { console.error('audit write failed:', auditErr); }
+
+        setStatus('up-status', '✓ Sent — it will appear in ' + patient.name + '\'s DocPat automatically.', 'ok');
+        clinicPushedBytes += pickedFile.size;
+        pickedFile = null;
+        $('drop-label').textContent = 'Click to choose a PDF or image (JPG/PNG)';
+        $('up-doctor').value = ''; $('up-notes').value = '';
+        loadAudit();
+        loadClinicMeter();
+      } catch (e) {
+        console.error(e);
+        if (e.code === 'permission-denied') {
+          setStatus('up-status',
+            'Delivery refused: the patient\'s storage is full, or they revoked this clinic\'s access. ' +
+            'Ask them to free up space or upgrade their plan, then try again.', 'err');
+        } else if (e.message === 'NO_IPFS_CONFIG') {
+          setStatus('up-status', 'IPFS is not configured — open Settings and paste your Pinata JWT.', 'err');
+        } else {
+          setStatus('up-status', 'Upload failed: ' + (e.message || e), 'err');
+        }
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    window.handleSignOut = async function () {
+      await signOut(_auth);
+      location.href = 'index.html';
+    };
+  </script>
+</body>
+
+</html>

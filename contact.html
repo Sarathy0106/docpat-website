@@ -24,6 +24,9 @@
     <p class="page-tag">Contact</p>
     <h1>Get in Touch</h1>
     <p class="updated">We respond within 2 business days · Billing queries prioritised within 24 hours</p>
+    <p id="plan-badge" style="display:none;margin-top:10px">
+      <span id="plan-badge-inner" style="display:inline-block;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700"></span>
+    </p>
 
     <p>Choose the right channel below and we'll route your message to the right team. For faster responses, include your registered phone number or email address, your device model, and — for billing issues — your Google Play order ID.</p>
 
@@ -121,6 +124,43 @@
       <a href="contact.html">Contact Us</a>
     </div>
   </footer>
+
+  <script>
+    // ── Support-tier routing ────────────────────────────────────────────────
+    // Tags every mailto subject with the sender's plan so Basic gets email
+    // helpdesk, Pro gets priority handling, and Clinic gets 24/7 routing.
+    // Plan source: ?plan= (app webview passes it) or the site session.
+    (function () {
+      var plan = (new URLSearchParams(location.search).get('plan') ||
+        localStorage.getItem('docpat_plan') || '').toLowerCase();
+      if (!['basic', 'pro', 'clinic'].includes(plan)) return;
+
+      var tags = {
+        basic: { tag: '[BASIC]', label: 'Basic plan — email helpdesk support', color: '#0284c7', bg: 'rgba(2,132,199,.08)' },
+        pro: { tag: '[PRO PRIORITY]', label: 'Pro plan — your request is prioritised', color: '#7c3aed', bg: 'rgba(124,58,237,.08)' },
+        clinic: { tag: '[CLINIC 24/7 SLA]', label: 'Clinic plan — 24/7 dedicated support', color: '#0d9488', bg: 'rgba(13,148,136,.08)' },
+      };
+      var t = tags[plan];
+
+      document.querySelectorAll('a.cta[href^="mailto:"]').forEach(function (a) {
+        try {
+          var url = new URL(a.href);
+          var subject = url.searchParams.get('subject') || '';
+          url.searchParams.set('subject', t.tag + ' ' + subject);
+          a.href = url.toString();
+        } catch (e) { /* leave the link untouched */ }
+      });
+
+      var badge = document.getElementById('plan-badge');
+      var inner = document.getElementById('plan-badge-inner');
+      if (badge && inner) {
+        inner.textContent = '● ' + t.label;
+        inner.style.color = t.color;
+        inner.style.backgroundColor = t.bg;
+        badge.style.display = '';
+      }
+    })();
+  </script>
 </body>
 
 </html>

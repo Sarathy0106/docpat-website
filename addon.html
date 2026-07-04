@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extra Storage — DocPat</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <meta name="description" content="Buy extra encrypted storage for your DocPat Pro or Clinic plan." />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sky: #0284c7;
+      --sky2: #075985;
+      --sky3: #0ea5e9;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: rgba(2, 132, 199, 0.16);
+      --bg: #f0f9ff;
+      --card: #ffffff;
+      --ok: #16a34a;
+      --crit: #dc2626;
+      --pro: #7c3aed;
+      --clinic: #0d9488;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 28px;
+      background: rgba(255, 255, 255, 0.85);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    nav .logo img { height: 28px; }
+    nav .back-link { color: var(--sky); font-weight: 600; font-size: 13.5px; text-decoration: none; }
+    nav .back-link:hover { text-decoration: underline; }
+
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .page-tag {
+      font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--sky); font-weight: 800; margin-bottom: 8px;
+    }
+    h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+    .sub { color: var(--muted); font-size: 14px; line-height: 1.55; margin-bottom: 28px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(14, 165, 233, 0.08);
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .card-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 14px; }
+
+    /* usage meter */
+    .meter-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+    .meter-row b { font-variant-numeric: tabular-nums; }
+    .meter-track { height: 9px; border-radius: 6px; background: var(--bg); overflow: hidden; }
+    .meter-fill { height: 100%; border-radius: 6px; background: var(--sky); transition: width .4s; }
+    .meter-fill.full { background: var(--crit); }
+    .meter-note { font-size: 12px; color: var(--ok); margin-top: 8px; font-weight: 600; }
+
+    /* plan badge */
+    .plan-chip { display: inline-flex; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; margin-bottom: 4px; }
+    .plan-chip.pro { background: rgba(124,58,237,.09); color: var(--pro); }
+    .plan-chip.clinic { background: rgba(13,148,136,.09); color: var(--clinic); }
+
+    /* stepper */
+    .stepper { display: flex; align-items: center; justify-content: center; gap: 22px; margin: 10px 0 4px; }
+    .step-btn {
+      width: 44px; height: 44px; border-radius: 12px;
+      border: 1.5px solid var(--border); background: #fff;
+      font-size: 22px; font-weight: 700; color: var(--sky2); cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .step-btn:hover { border-color: var(--sky); background: rgba(14,165,233,.05); }
+    .step-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .gb-display { text-align: center; min-width: 110px; }
+    .gb-num { font-size: 40px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+    .gb-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 4px; }
+
+    .price-line {
+      display: flex; justify-content: space-between; align-items: baseline;
+      border-top: 1px solid var(--border);
+      margin-top: 18px; padding-top: 16px;
+    }
+    .price-line .lbl { color: var(--muted); font-size: 13px; }
+    .price-line .amt { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
+    .price-line .amt small { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+    .buy-btn {
+      width: 100%;
+      margin-top: 16px;
+      background: linear-gradient(135deg, var(--sky), var(--sky2));
+      color: #fff; border: none; padding: 15px; border-radius: 12px;
+      font-weight: 800; font-size: 15px; cursor: pointer;
+      box-shadow: 0 8px 28px rgba(14, 165, 233, 0.3);
+      transition: transform .15s, box-shadow .15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .buy-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(14, 165, 233, 0.4); }
+    .buy-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .fine { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+
+    /* gate card (signed out / wrong plan) */
+    .gate { text-align: center; padding: 40px 28px; }
+    .gate-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(2, 132, 199, 0.1);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; font-size: 24px;
+    }
+    .gate h2 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+    .gate p { color: var(--muted); font-size: 13.5px; line-height: 1.55; margin-bottom: 20px; }
+    .gate a.cta-link {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--sky), var(--sky2));
+      color: #fff; padding: 12px 28px; border-radius: 10px;
+      font-weight: 700; font-size: 13.5px; text-decoration: none;
+      box-shadow: 0 8px 26px rgba(14, 165, 233, 0.28);
+    }
+
+    #toast {
+      position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(80px);
+      background: var(--text); color: #fff; padding: 12px 22px; border-radius: 12px;
+      font-size: 13.5px; font-weight: 600; opacity: 0; transition: all .3s; z-index: 100;
+      max-width: 90vw; text-align: center;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.ok { background: var(--ok); }
+    #toast.err { background: var(--crit); }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <a class="logo" href="index.html">
+      <img src="assets/logo.svg" alt="DocPat Logo" />
+      <img src="assets/font.png" alt="DocPat" style="height:20px" />
+    </a>
+    <a class="back-link" href="index.html#pricing">← Back to Pricing</a>
+  </nav>
+
+  <div class="wrap">
+    <p class="page-tag">Add-on</p>
+    <h1>Extra Storage</h1>
+    <p class="sub">More encrypted space for your records, on top of your plan — added instantly, never expires.</p>
+
+    <!-- loading -->
+    <div class="card gate" id="state-loading">
+      <div class="gate-icon">⏳</div>
+      <h2>Checking your plan…</h2>
+    </div>
+
+    <!-- signed out -->
+    <div class="card gate" id="state-signedout" style="display:none">
+      <div class="gate-icon">🔒</div>
+      <h2>Sign in to buy storage</h2>
+      <p>Add-on storage attaches to your DocPat account, so we need to know who you are first.</p>
+      <a class="cta-link" href="login.html?redirect=addon.html">Sign in →</a>
+    </div>
+
+    <!-- wrong plan -->
+    <div class="card gate" id="state-ineligible" style="display:none">
+      <div class="gate-icon">☁️</div>
+      <h2>Add-ons are a Pro &amp; Clinic perk</h2>
+      <p>Extra storage is available at <b>₹35/GB on Pro</b> and <b>₹25/GB on Clinic</b>. Upgrade your plan to unlock add-ons.</p>
+      <a class="cta-link" href="index.html#pricing">See plans →</a>
+    </div>
+
+    <!-- store -->
+    <div id="state-store" style="display:none">
+      <div class="card">
+        <div class="card-title">Your storage</div>
+        <span class="plan-chip" id="plan-chip"></span>
+        <div class="meter-row" style="margin-top:10px">
+          <span>Used</span>
+          <b id="meter-label">— / —</b>
+        </div>
+        <div class="meter-track"><div class="meter-fill" id="meter-fill" style="width:0%"></div></div>
+        <div class="meter-note" id="addon-note" style="display:none"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">How much do you need?</div>
+        <div class="stepper">
+          <button class="step-btn" id="gb-minus" onclick="stepGb(-1)">−</button>
+          <div class="gb-display">
+            <div class="gb-num" id="gb-num">5</div>
+            <div class="gb-label">GB</div>
+          </div>
+          <button class="step-btn" id="gb-plus" onclick="stepGb(1)">+</button>
+        </div>
+        <div class="price-line">
+          <span class="lbl" id="rate-label">₹— per GB</span>
+          <span class="amt" id="total-label">₹—<small> one-time</small></span>
+        </div>
+        <button class="buy-btn" id="buy-btn" onclick="handleBuy()">Buy storage</button>
+        <p class="fine">One-time payment via Razorpay. Storage is credited to your account immediately and counts on both the app and the web.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore, doc, getDoc, setDoc, addDoc, collection,
+      serverTimestamp, increment
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const RZP_KEY = 'rzp_test_T2QM6KGZZxlupC';
+    const GB = 1024 * 1024 * 1024;
+    const RATES = { pro: 35, clinic: 25 };
+    const CAPS = { free: 100 * 1024 * 1024, basic: 500 * 1024 * 1024, pro: 2 * GB, clinic: 10 * GB };
+
+    const _fbApp = initializeApp({
+      apiKey: 'AIzaSyCuPNdqQHMHRmNCzZPYLLMTfC101AqXveY',
+      authDomain: 'docpat-84bd9.firebaseapp.com',
+      projectId: 'docpat-84bd9',
+      storageBucket: 'docpat-84bd9.firebasestorage.app',
+      messagingSenderId: '638379411939',
+      appId: '1:638379411939:web:4c37de2a1785f1291fb8d6'
+    }, 'addon-page');
+    const _auth = getAuth(_fbApp);
+    const _db = getFirestore(_fbApp);
+
+    let uid = null, plan = 'free', phone = '';
+    let usedBytes = 0, extraBytes = 0;
+    let gb = 5;
+    const $ = id => document.getElementById(id);
+
+    function showState(id) {
+      ['state-loading', 'state-signedout', 'state-ineligible', 'state-store']
+        .forEach(s => $(s).style.display = s === id ? '' : 'none');
+    }
+    function toast(msg, cls) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = 'show ' + (cls || '');
+      setTimeout(() => t.className = '', 4000);
+    }
+    function fmtBytes(b) {
+      if (b >= GB) return (b / GB).toFixed(1).replace(/\.0$/, '') + ' GB';
+      return Math.round(b / (1024 * 1024)) + ' MB';
+    }
+
+    onAuthStateChanged(_auth, async (user) => {
+      if (!user) { showState('state-signedout'); return; }
+      uid = user.uid;
+      phone = user.phoneNumber || localStorage.getItem('docpat_phone') || '';
+      try {
+        const snap = await getDoc(doc(_db, 'users', uid));
+        const d = snap.exists() ? snap.data() : {};
+        plan = (d.plan || 'free').toLowerCase();
+        // Respect expiry — a lapsed plan is a free plan.
+        const exp = d.plan_expires_at && d.plan_expires_at.toDate ? d.plan_expires_at.toDate() : null;
+        if (plan !== 'free' && exp && Date.now() > exp.getTime()) plan = 'free';
+        usedBytes = d.storageUsedBytes || 0;
+        extraBytes = d.extraStorageBytes || 0;
+      } catch (e) { console.error(e); }
+
+      if (plan !== 'pro' && plan !== 'clinic') { showState('state-ineligible'); return; }
+      renderStore();
+      showState('state-store');
+    });
+
+    function renderStore() {
+      const chip = $('plan-chip');
+      chip.textContent = plan === 'clinic' ? 'CLINIC · ₹25/GB' : 'PRO · ₹35/GB';
+      chip.className = 'plan-chip ' + plan;
+
+      const cap = CAPS[plan] + extraBytes;
+      const pct = Math.min(100, Math.round((usedBytes / cap) * 100));
+      $('meter-label').textContent = fmtBytes(usedBytes) + ' / ' + fmtBytes(cap);
+      const fill = $('meter-fill');
+      fill.style.width = pct + '%';
+      fill.className = 'meter-fill' + (pct >= 90 ? ' full' : '');
+      if (extraBytes > 0) {
+        const note = $('addon-note');
+        note.textContent = 'Includes ' + fmtBytes(extraBytes) + ' of purchased add-on storage';
+        note.style.display = '';
+      }
+      renderPrice();
+    }
+
+    function renderPrice() {
+      const rate = RATES[plan];
+      $('gb-num').textContent = gb;
+      $('rate-label').textContent = '₹' + rate + ' per GB';
+      $('total-label').innerHTML = '₹' + (gb * rate).toLocaleString('en-IN') + '<small> one-time</small>';
+      $('buy-btn').textContent = 'Buy +' + gb + ' GB for ₹' + (gb * rate).toLocaleString('en-IN');
+      $('gb-minus').disabled = gb <= 1;
+      $('gb-plus').disabled = gb >= 50;
+    }
+
+    window.stepGb = function (d) {
+      gb = Math.min(50, Math.max(1, gb + d));
+      renderPrice();
+    };
+
+    window.handleBuy = function () {
+      if (typeof Razorpay === 'undefined') { toast('Payment gateway still loading — try again.', 'err'); return; }
+      const rate = RATES[plan];
+      const amount = gb * rate;
+
+      const rzp = new Razorpay({
+        key: RZP_KEY,
+        amount: amount * 100, // paise
+        currency: 'INR',
+        name: 'DocPat',
+        description: '+' + gb + ' GB extra storage (' + plan + ' plan)',
+        image: 'assets/logo.svg',
+        prefill: { contact: phone },
+        notes: { type: 'storage_addon', gb: String(gb), plan, uid },
+        theme: { color: '#0284c7' },
+        handler: async function (response) {
+          const btn = $('buy-btn');
+          btn.disabled = true;
+          try {
+            await setDoc(doc(_db, 'users', uid), {
+              extraStorageBytes: increment(gb * GB),
+            }, { merge: true });
+            try {
+              await addDoc(collection(_db, 'users', uid, 'payments'), {
+                razorpay_payment_id: response.razorpay_payment_id,
+                type: 'storage_addon',
+                gb, amount,
+                currency: 'INR',
+                status: 'paid',
+                created_at: serverTimestamp(),
+              });
+            } catch (logErr) { console.error('payment log failed:', logErr); }
+            extraBytes += gb * GB;
+            renderStore();
+            toast('+' + gb + ' GB added to your storage!', 'ok');
+          } catch (e) {
+            console.error(e);
+            toast('Payment received but crediting failed — contact support with your payment ID.', 'err');
+          } finally {
+            btn.disabled = false;
+          }
+        },
+        modal: { ondismiss: function () { toast('Payment cancelled.'); } },
+      });
+      rzp.on('payment.failed', function (resp) {
+        toast('Payment failed: ' + (resp.error.description || 'Unknown error'), 'err');
+      });
+      rzp.open();
+    };
+  </script>
+</body>
+
+</html>

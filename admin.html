@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Console — DocPat</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sky: #0284c7;
+      --sky2: #075985;
+      --sky3: #0ea5e9;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: rgba(2, 132, 199, 0.16);
+      --bg: #f0f9ff;
+      --card: #ffffff;
+      --ok: #16a34a;
+      --ok-bg: rgba(22, 163, 74, 0.1);
+      --warn: #d97706;
+      --warn-bg: rgba(217, 119, 6, 0.1);
+      --crit: #dc2626;
+      --crit-bg: rgba(220, 38, 38, 0.1);
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── Gate screens (loading / signed-out / denied / password) ── */
+    .gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .gate-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(14, 165, 233, 0.12);
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .gate-icon {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+      font-size: 24px;
+    }
+    .gate-icon.sky { background: rgba(2, 132, 199, 0.1); }
+    .gate-icon.crit { background: var(--crit-bg); }
+    .gate h1 { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+    .gate p.sub { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin-bottom: 22px; }
+    .gate input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      font-size: 15px;
+      font-family: var(--mono);
+      letter-spacing: .04em;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .gate input[type="password"]:focus { border-color: var(--sky); }
+    .gate .err {
+      color: var(--crit);
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      min-height: 16px;
+    }
+    .gate-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--sky), var(--sky2));
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 8px 26px rgba(14, 165, 233, 0.28);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .gate-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 34px rgba(14, 165, 233, 0.38); }
+    .gate-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .gate-link {
+      display: inline-block;
+      margin-top: 18px;
+      color: var(--sky);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .gate-link:hover { text-decoration: underline; }
+
+    /* ── Dashboard shell ── */
+    #dashboard { display: none; min-height: 100vh; }
+    .sidebar {
+      width: 232px;
+      flex-shrink: 0;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; bottom: 0; left: 0;
+    }
+    .sidebar-head {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-head .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .sidebar-head .brand img { width: 26px; height: 26px; }
+    .sidebar-head .brand span { font-weight: 800; font-size: 15px; }
+    .sidebar-head .role-tag { font-size: 11px; color: var(--sky); font-weight: 700; letter-spacing: .04em; }
+    .nav { flex: 1; padding: 14px 12px; display: flex; flex-direction: column; gap: 3px; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 13.5px;
+      background: none; border: none;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background .15s, color .15s;
+    }
+    .nav-btn:hover { background: rgba(2, 132, 199, 0.06); color: var(--text); }
+    .nav-btn.active { background: rgba(2, 132, 199, 0.1); color: var(--sky2); }
+    .sidebar-foot { padding: 14px 20px 20px; border-top: 1px solid var(--border); }
+    .sidebar-foot .who { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; word-break: break-all; }
+    .foot-actions { display: flex; gap: 8px; }
+    .foot-actions button {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+    }
+    .foot-actions button:hover { border-color: var(--sky); color: var(--sky); }
+    .foot-actions button.danger:hover { border-color: var(--crit); color: var(--crit); }
+
+    .main { margin-left: 232px; padding: 32px 36px 60px; max-width: 1100px; }
+    .view { display: none; }
+    .view.active { display: block; }
+    .view-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .view-head h2 { font-size: 21px; font-weight: 800; }
+    .refresh-btn, .filter-select {
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--sky2);
+      cursor: pointer;
+    }
+    .refresh-btn:hover { background: rgba(2, 132, 199, 0.06); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 26px; }
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      box-shadow: 0 2px 16px rgba(14, 165, 233, 0.06);
+    }
+    .kpi-num { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .kpi-label { font-size: 11.5px; color: var(--muted); font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: .03em; }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(14, 165, 233, 0.06);
+      padding: 18px 20px;
+    }
+    .panel-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 12px; }
+
+    .row-list { display: flex; flex-direction: column; gap: 2px; }
+    .log-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 4px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .log-row:last-child { border-bottom: none; }
+    .log-action { font-weight: 700; width: 130px; flex-shrink: 0; }
+    .log-uid { font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .log-time { font-size: 12px; color: var(--muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+    .pill { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .pill.ok { background: var(--ok-bg); color: var(--ok); }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .pill.crit { background: var(--crit-bg); color: var(--crit); }
+    .pill.sky { background: rgba(2,132,199,.1); color: var(--sky2); }
+
+    .alert-card {
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--sky);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .alert-card.crit { border-left-color: var(--crit); }
+    .alert-card.warn { border-left-color: var(--warn); }
+    .alert-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+    .alert-msg { font-size: 13.5px; font-weight: 500; }
+    .alert-meta { font-size: 11.5px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+    .resolve-btn {
+      font-size: 11.5px; font-weight: 700;
+      padding: 6px 12px; border-radius: 8px;
+      background: var(--ok-bg); color: var(--ok);
+      border: 1px solid rgba(22,163,74,.25);
+      cursor: pointer; flex-shrink: 0;
+    }
+    .resolve-btn:hover { background: rgba(22,163,74,.18); }
+    .empty-state { text-align: center; color: var(--muted); padding: 36px 0; font-size: 13.5px; }
+
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ═══ GATE: loading ═══ -->
+  <div id="gate-loading" class="gate">
+    <div class="gate-card">
+      <div class="gate-icon sky">⏳</div>
+      <h1>Checking access…</h1>
+      <p class="sub">One moment.</p>
+    </div>
+  </div>
+
+  <!-- ═══ GATE: signed out ═══ -->
+  <div id="gate-signedout" class="gate" style="display:none">
+    <div class="gate-card">
+      <div class="gate-icon sky">🔒</div>
+      <h1>Sign in required</h1>
+      <p class="sub">You need to be signed in to your DocPat account to reach this page.</p>
+      <a class="gate-link" href="login.html?redirect=admin.html">Go to sign in →</a>
+    </div>
+  </div>
+
+  <!-- ═══ GATE: access denied (not an admin account) ═══ -->
+  <div id="gate-denied" class="gate" style="display:none">
+    <div class="gate-card">
+      <div class="gate-icon crit">⛔</div>
+      <h1>Access denied</h1>
+      <p class="sub">This account doesn't have admin access. If you believe this is a mistake, contact whoever manages the DocPat project.</p>
+      <a class="gate-link" href="index.html">← Back to DocPat</a>
+    </div>
+  </div>
+
+  <!-- ═══ GATE: first-time admin password setup ═══ -->
+  <div id="gate-setup" class="gate" style="display:none">
+    <div class="gate-card">
+      <div class="gate-icon sky">🔑</div>
+      <h1>Set your admin password</h1>
+      <p class="sub">Your account has admin access. Choose a password for this console — it's separate from your login and will be asked for every time you open this page.</p>
+      <input id="setup-pw1" type="password" placeholder="New admin password" autocomplete="new-password" />
+      <input id="setup-pw2" type="password" placeholder="Confirm password" autocomplete="new-password" />
+      <div class="err" id="setup-err"></div>
+      <button class="gate-btn" id="setup-btn" onclick="handleSetup()">Save &amp; continue</button>
+    </div>
+  </div>
+
+  <!-- ═══ GATE: admin password prompt ═══ -->
+  <div id="gate-password" class="gate" style="display:none">
+    <div class="gate-card">
+      <div class="gate-icon sky">🛡️</div>
+      <h1>Admin Console</h1>
+      <p class="sub" id="password-sub">Enter your admin password to continue.</p>
+      <input id="pw-input" type="password" placeholder="Admin password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')handleUnlock()" />
+      <div class="err" id="pw-err"></div>
+      <button class="gate-btn" id="pw-btn" onclick="handleUnlock()">Unlock console</button>
+      <a class="gate-link" href="index.html">← Back to DocPat</a>
+    </div>
+  </div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div id="dashboard">
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <div class="brand"><img src="assets/logo.svg" alt="" /><span>DocPat</span></div>
+        <div class="role-tag">ADMIN CONSOLE</div>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="overview" onclick="showView('overview')">📊&nbsp; Overview</button>
+        <button class="nav-btn" data-view="audit" onclick="showView('audit')">📋&nbsp; Audit Logs</button>
+        <button class="nav-btn" data-view="alerts" onclick="showView('alerts')">🚨&nbsp; Security Alerts</button>
+        <button class="nav-btn" data-view="signing" onclick="showView('signing')">⛓️&nbsp; Signing Logs</button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="who" id="who-label">—</div>
+        <div class="foot-actions">
+          <button onclick="handleLock()">Lock</button>
+          <button class="danger" onclick="handleSignOut()">Sign out</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- Overview -->
+      <div class="view active" id="view-overview">
+        <div class="view-head">
+          <h2>Overview</h2>
+          <button class="refresh-btn" onclick="loadOverview()">↻ Refresh</button>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-num" id="kpi-logins">—</div><div class="kpi-label">Today logins</div></div>
+          <div class="kpi-card"><div class="kpi-num" id="kpi-failed">—</div><div class="kpi-label">Failed logins</div></div>
+          <div class="kpi-card"><div class="kpi-num" id="kpi-alerts">—</div><div class="kpi-label">Active alerts</div></div>
+          <div class="kpi-card"><div class="kpi-num" id="kpi-txs">—</div><div class="kpi-label">Blockchain txs</div></div>
+          <div class="kpi-card"><div class="kpi-num" id="kpi-shares">—</div><div class="kpi-label">Total shares</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Recent audit events</div>
+          <div class="row-list" id="overview-recent"><div class="empty-state">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- Audit Logs -->
+      <div class="view" id="view-audit">
+        <div class="view-head">
+          <h2>Audit Logs</h2>
+          <button class="refresh-btn" onclick="loadAudit()">↻ Refresh</button>
+        </div>
+        <div class="panel">
+          <div class="row-list" id="audit-list"><div class="empty-state">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- Security Alerts -->
+      <div class="view" id="view-alerts">
+        <div class="view-head">
+          <h2>Security Alerts</h2>
+          <button class="refresh-btn" onclick="loadAlerts()">↻ Refresh</button>
+        </div>
+        <div id="alerts-list"><div class="empty-state">Loading…</div></div>
+      </div>
+
+      <!-- Signing Logs -->
+      <div class="view" id="view-signing">
+        <div class="view-head">
+          <h2>Blockchain Signing Logs</h2>
+          <button class="refresh-btn" onclick="loadSigning()">↻ Refresh</button>
+        </div>
+        <div class="panel">
+          <div class="row-list" id="signing-list"><div class="empty-state">Loading…</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+    import {
+      getFirestore, doc, getDoc, setDoc, updateDoc,
+      collection, query, where, orderBy, limit, getDocs, getCountFromServer, Timestamp
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const _fbApp = initializeApp({
+      apiKey: 'AIzaSyCuPNdqQHMHRmNCzZPYLLMTfC101AqXveY',
+      authDomain: 'docpat-84bd9.firebaseapp.com',
+      projectId: 'docpat-84bd9',
+      storageBucket: 'docpat-84bd9.firebasestorage.app',
+      messagingSenderId: '638379411939',
+      appId: '1:638379411939:web:4c37de2a1785f1291fb8d6'
+    }, 'admin-console');
+    const _auth = getAuth(_fbApp);
+    const _db = getFirestore(_fbApp);
+
+    let currentUid = null;
+
+    // ── helpers ────────────────────────────────────────────────────────────
+    function showOnly(id) {
+      ['gate-loading', 'gate-signedout', 'gate-denied', 'gate-setup', 'gate-password'].forEach(g => {
+        document.getElementById(g).style.display = g === id ? 'flex' : 'none';
+      });
+      document.getElementById('dashboard').style.display = id === null ? 'flex' : 'none';
+    }
+
+    async function sha256Hex(str) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function fmt(ts) {
+      if (!ts) return '—';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString();
+    }
+
+    const actionPillClass = a => ({
+      loginFailure: 'crit', delete: 'crit',
+      share: 'warn', grantAccess: 'warn',
+      loginSuccess: 'ok', upload: 'ok',
+    }[a] || 'sky');
+
+    // ── lockout (mirrors the app's admin PIN lockout: 5 attempts / 2 min) ──
+    const MAX_ATTEMPTS = 5;
+    const LOCK_MS = 2 * 60 * 1000;
+    function lockKey() { return 'docpat_admin_lock_' + currentUid; }
+    function getLock() {
+      try { return JSON.parse(sessionStorage.getItem(lockKey())) || { attempts: 0, lockUntil: 0 }; }
+      catch { return { attempts: 0, lockUntil: 0 }; }
+    }
+    function setLock(s) { sessionStorage.setItem(lockKey(), JSON.stringify(s)); }
+
+    // ── auth + role gate ─────────────────────────────────────────────────────
+    onAuthStateChanged(_auth, async (user) => {
+      if (!user) { showOnly('gate-signedout'); return; }
+      currentUid = user.uid;
+
+      let data;
+      try {
+        const snap = await getDoc(doc(_db, 'users', user.uid));
+        data = snap.exists() ? snap.data() : null;
+      } catch (e) {
+        console.error('Role check failed:', e);
+        showOnly('gate-denied');
+        return;
+      }
+
+      if (!data || data.role !== 'admin') { showOnly('gate-denied'); return; }
+
+      document.getElementById('who-label').textContent = data.displayName || data.email || data.phoneNumber || user.uid;
+
+      if (!data.adminPasswordHash) {
+        showOnly('gate-setup');
+        return;
+      }
+
+      // Already unlocked earlier in this browser tab session?
+      if (sessionStorage.getItem('docpat_admin_unlocked_' + user.uid) === '1') {
+        enterDashboard();
+        return;
+      }
+
+      const lock = getLock();
+      if (lock.lockUntil > Date.now()) {
+        showLockedState(lock.lockUntil);
+      } else {
+        showOnly('gate-password');
+      }
+      window._adminPasswordHash = data.adminPasswordHash;
+    });
+
+    function showLockedState(until) {
+      showOnly('gate-password');
+      const btn = document.getElementById('pw-btn');
+      const err = document.getElementById('pw-err');
+      const input = document.getElementById('pw-input');
+      input.disabled = true;
+      btn.disabled = true;
+      const tick = () => {
+        const remaining = until - Date.now();
+        if (remaining <= 0) {
+          err.textContent = '';
+          input.disabled = false;
+          btn.disabled = false;
+          clearInterval(t);
+          return;
+        }
+        const m = Math.floor(remaining / 60000);
+        const s = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
+        err.textContent = `Too many attempts — locked for ${m}:${s}`;
+      };
+      tick();
+      const t = setInterval(tick, 1000);
+    }
+
+    // ── first-time setup ─────────────────────────────────────────────────────
+    window.handleSetup = async function () {
+      const pw1 = document.getElementById('setup-pw1').value;
+      const pw2 = document.getElementById('setup-pw2').value;
+      const err = document.getElementById('setup-err');
+      err.textContent = '';
+      if (pw1.length < 8) { err.textContent = 'Use at least 8 characters.'; return; }
+      if (pw1 !== pw2) { err.textContent = 'Passwords do not match.'; return; }
+
+      const btn = document.getElementById('setup-btn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const hash = await sha256Hex(pw1);
+        await updateDoc(doc(_db, 'users', currentUid), { adminPasswordHash: hash });
+        sessionStorage.setItem('docpat_admin_unlocked_' + currentUid, '1');
+        enterDashboard();
+      } catch (e) {
+        err.textContent = 'Could not save — please try again.';
+        btn.disabled = false; btn.textContent = 'Save & continue';
+        console.error(e);
+      }
+    };
+
+    // ── password unlock ──────────────────────────────────────────────────────
+    window.handleUnlock = async function () {
+      const input = document.getElementById('pw-input');
+      const err = document.getElementById('pw-err');
+      const btn = document.getElementById('pw-btn');
+      const entered = input.value;
+      if (!entered) return;
+
+      btn.disabled = true;
+      const hash = await sha256Hex(entered);
+
+      if (hash === window._adminPasswordHash) {
+        sessionStorage.setItem('docpat_admin_unlocked_' + currentUid, '1');
+        setLock({ attempts: 0, lockUntil: 0 });
+        enterDashboard();
+        return;
+      }
+
+      btn.disabled = false;
+      const lock = getLock();
+      lock.attempts += 1;
+      if (lock.attempts >= MAX_ATTEMPTS) {
+        lock.lockUntil = Date.now() + LOCK_MS;
+        lock.attempts = 0;
+        setLock(lock);
+        showLockedState(lock.lockUntil);
+      } else {
+        setLock(lock);
+        err.textContent = `Wrong password — ${MAX_ATTEMPTS - lock.attempts} attempt(s) left`;
+      }
+      input.value = '';
+    };
+
+    window.handleLock = function () {
+      sessionStorage.removeItem('docpat_admin_unlocked_' + currentUid);
+      document.getElementById('pw-input').value = '';
+      document.getElementById('pw-err').textContent = '';
+      showOnly('gate-password');
+    };
+
+    window.handleSignOut = async function () {
+      sessionStorage.removeItem('docpat_admin_unlocked_' + currentUid);
+      await signOut(_auth);
+      location.href = 'index.html';
+    };
+
+    function enterDashboard() {
+      showOnly(null);
+      loadOverview();
+    }
+
+    // ── views ────────────────────────────────────────────────────────────────
+    window.showView = function (name) {
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+      if (name === 'overview') loadOverview();
+      if (name === 'audit') loadAudit();
+      if (name === 'alerts') loadAlerts();
+      if (name === 'signing') loadSigning();
+    };
+
+    // ── data loaders ─────────────────────────────────────────────────────────
+    window.loadOverview = async function () {
+      try {
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const todayTs = Timestamp.fromDate(todayStart);
+        const auditCol = collection(_db, 'audit_events');
+
+        const [loginsSnap, failedSnap, alertsSnap, sharesSnap, signSnap, recentSnap] = await Promise.all([
+          getCountFromServer(query(auditCol, where('action', '==', 'loginSuccess'), where('timestamp', '>=', todayTs))),
+          getCountFromServer(query(auditCol, where('action', '==', 'loginFailure'))),
+          getCountFromServer(query(collection(_db, 'security_alerts'), where('resolved', '==', false))),
+          getCountFromServer(query(auditCol, where('action', '==', 'share'))),
+          getCountFromServer(collection(_db, 'signing_audit_log')),
+          getDocs(query(auditCol, orderBy('timestamp', 'desc'), limit(8))),
+        ]);
+
+        document.getElementById('kpi-logins').textContent = loginsSnap.data().count;
+        document.getElementById('kpi-failed').textContent = failedSnap.data().count;
+        document.getElementById('kpi-alerts').textContent = alertsSnap.data().count;
+        document.getElementById('kpi-txs').textContent = signSnap.data().count;
+        document.getElementById('kpi-shares').textContent = sharesSnap.data().count;
+
+        const rows = recentSnap.docs.map(d => rowHtml(d.data()));
+        document.getElementById('overview-recent').innerHTML = rows.length ? rows.join('') : '<div class="empty-state">No events yet.</div>';
+      } catch (e) {
+        console.error('loadOverview error:', e);
+      }
+    };
+
+    function rowHtml(e) {
+      return `<div class="log-row">
+        <span class="pill ${actionPillClass(e.action)}">${e.action || '—'}</span>
+        <span class="log-uid">${e.userId || '—'}</span>
+        <span class="log-time">${fmt(e.timestamp)}</span>
+      </div>`;
+    }
+
+    window.loadAudit = async function () {
+      const el = document.getElementById('audit-list');
+      try {
+        const snap = await getDocs(query(collection(_db, 'audit_events'), orderBy('timestamp', 'desc'), limit(100)));
+        el.innerHTML = snap.empty ? '<div class="empty-state">No audit events yet.</div>' : snap.docs.map(d => rowHtml(d.data())).join('');
+      } catch (e) {
+        el.innerHTML = '<div class="empty-state">Could not load audit logs.</div>';
+        console.error(e);
+      }
+    };
+
+    window.loadAlerts = async function () {
+      const el = document.getElementById('alerts-list');
+      try {
+        const snap = await getDocs(query(collection(_db, 'security_alerts'), orderBy('timestamp', 'desc'), limit(100)));
+        if (snap.empty) { el.innerHTML = '<div class="panel"><div class="empty-state">✅ No security alerts.</div></div>'; return; }
+        el.innerHTML = snap.docs.map(d => {
+          const a = d.data();
+          const sevClass = a.severity === 'critical' ? 'crit' : (a.severity === 'high' ? 'warn' : (a.severity === 'medium' ? 'warn' : 'sky'));
+          return `<div class="alert-card ${sevClass === 'crit' ? 'crit' : (sevClass === 'warn' ? 'warn' : '')}">
+            <div class="alert-top">
+              <div>
+                <span class="pill ${sevClass}">${(a.severity || '—').toUpperCase()}</span>
+                ${a.resolved ? '<span class="pill ok" style="margin-left:6px">RESOLVED</span>' : ''}
+              </div>
+              ${!a.resolved ? `<button class="resolve-btn" onclick="resolveAlert('${d.id}')">Resolve</button>` : ''}
+            </div>
+            <div class="alert-msg">${a.message || ''}</div>
+            <div class="alert-meta">${a.uid ? 'UID: ' + a.uid + ' · ' : ''}${fmt(a.timestamp)}</div>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        el.innerHTML = '<div class="empty-state">Could not load alerts.</div>';
+        console.error(e);
+      }
+    };
+
+    window.resolveAlert = async function (id) {
+      try {
+        await updateDoc(doc(_db, 'security_alerts', id), { resolved: true });
+        loadAlerts();
+      } catch (e) { console.error(e); }
+    };
+
+    window.loadSigning = async function () {
+      const el = document.getElementById('signing-list');
+      try {
+        const snap = await getDocs(query(collection(_db, 'signing_audit_log'), orderBy('serverTimestamp', 'desc'), limit(80)));
+        if (snap.empty) { el.innerHTML = '<div class="empty-state">No signing activity yet.</div>'; return; }
+        el.innerHTML = snap.docs.map(d => {
+          const e = d.data();
+          return `<div class="log-row">
+            <span class="pill ${e.success ? 'ok' : 'crit'}">${e.success ? 'SUCCESS' : 'FAILED'}</span>
+            <span class="log-uid">${e.txHash || 'No hash'}</span>
+            <span class="log-time">${fmt(e.serverTimestamp)}</span>
+          </div>`;
+        }).join('');
+      } catch (e) {
+        el.innerHTML = '<div class="empty-state">Could not load signing logs.</div>';
+        console.error(e);
+      }
+    };
+  </script>
+</body>
+
+</html>

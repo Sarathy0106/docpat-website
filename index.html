@@ -2500,7 +2500,7 @@
               </svg><span><strong>2 GB</strong> encrypted storage (~1,000 docs)</span></li>
             <li><svg class="chk" viewBox="0 0 24 24">
                 <polyline points="20 6 9 17 4 12" />
-              </svg><span>Extra storage at <strong>₹35/GB</strong></span></li>
+              </svg><span>Extra storage at <strong>₹35/GB</strong> — <a href="addon.html" style="color:var(--sky);font-weight:600">buy</a></span></li>
             <li
               style="color:var(--sky);font-size:11px;padding-top:10px;border-top:1px solid rgba(14,165,233,0.08);margin-top:4px;">
               <svg class="chk" viewBox="0 0 24 24">
@@ -2535,7 +2535,7 @@
               </svg><span><strong>5 team members</strong></span></li>
             <li><svg class="chk" viewBox="0 0 24 24">
                 <polyline points="20 6 9 17 4 12" />
-              </svg><span>Extra storage at <strong>₹25/GB</strong></span></li>
+              </svg><span>Extra storage at <strong>₹25/GB</strong> — <a href="addon.html" style="color:var(--sky);font-weight:600">buy</a></span></li>
             <li
               style="color:var(--sky);font-size:11px;padding-top:10px;border-top:1px solid rgba(14,165,233,0.08);margin-top:4px;">
               <svg class="chk" viewBox="0 0 24 24">
@@ -3725,8 +3725,29 @@
         const snap = await getDoc(doc(_fbDb, 'users', uid));
         if (snap.exists()) {
           const d = snap.data();
-          const plan = d.plan || 'free';
-          const billing = d.plan_billing || 'monthly';
+          let plan = d.plan || 'free';
+          let billing = d.plan_billing || 'monthly';
+
+          // Real-time expiration check — mirrors the app's auto-revert-to-Free
+          // behavior in auth_provider.dart so both surfaces agree on plan state.
+          const expiresAt = d.plan_expires_at && typeof d.plan_expires_at.toDate === 'function'
+            ? d.plan_expires_at.toDate() : null;
+          if (plan !== 'free' && expiresAt && Date.now() > expiresAt.getTime()) {
+            plan = 'free';
+            billing = 'monthly';
+            try {
+              await updateDoc(doc(_fbDb, 'users', uid), {
+                plan: 'free',
+                plan_billing: 'monthly',
+                plan_price: 0,
+                plan_productId: 'docpat_free_monthly',
+                plan_expires_at: null,
+              });
+            } catch (writeErr) {
+              console.error('loadUserPlan expiry write-back error:', writeErr);
+            }
+          }
+
           localStorage.setItem('docpat_plan', plan);
           localStorage.setItem('docpat_plan_billing', billing);
           applyPlanBadge(plan, billing);

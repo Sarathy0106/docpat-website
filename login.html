@@ -756,6 +756,34 @@
       if (name) localStorage.setItem('docpat_name', name);
     }
 
+    // Permanent 6-digit DocPat number — the ID clinics and family groups use
+    // to find the right account. Mirrors the app's allocation: the
+    // docpat_numbers registry is create-only in Firestore rules, so a
+    // colliding number is rejected and we retry with a fresh one.
+    // New users get it at signup; older accounts are backfilled on login.
+    async function _ensureDocpatNo(uid, existing) {
+      if (existing) return existing;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        const n = String(100000 + Math.floor(Math.random() * 900000));
+        try {
+          await setDoc(doc(_fbDb, 'docpat_numbers', n), {
+            uid,
+            createdAt: serverTimestamp(),
+          });
+          await updateDoc(doc(_fbDb, 'users', uid), { docpatNo: n });
+          return n;
+        } catch (e) {
+          // permission-denied → number already taken, try another
+          if (e.code !== 'permission-denied') {
+            console.error('DocPat number allocation error:', e);
+            return null;
+          }
+        }
+      }
+      console.error('Could not allocate a DocPat number after 8 tries');
+      return null;
+    }
+
     // If redirected here from logout, wipe everything and stay on login page
     if (new URLSearchParams(location.search).get('logout')) {
       _clearSession();
@@ -867,9 +895,11 @@
             photoURL: '',
             uid: uid,
             aadhaarVerified: false,
+            role: 'user',
             createdAt: serverTimestamp(),
             lastLoginAt: serverTimestamp(),
           });
+          await _ensureDocpatNo(uid, null);
         } else {
           // EXISTING USER → update lastLoginAt (+ phone), same as the app
           const data = snap.data();
@@ -878,6 +908,7 @@
             lastLoginAt: serverTimestamp(),
             ...(fullPhone ? { phoneNumber: fullPhone } : {}),
           });
+          await _ensureDocpatNo(uid, data.docpatNo || null);
         }
 
         _persistSession(fullPhone, displayName, uid);
